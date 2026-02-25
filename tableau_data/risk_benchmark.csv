@@ -1,0 +1,6 @@
+Metric,Your Portfolio,SP500 Benchmark,Higher Is Better
+Sharpe Ratio,2.562,1.0,True
+Sortino Ratio,3.9029,1.5,True
+Volatility %,12.2551,15.0,False
+Max Drawdown %,4.6382,20.0,False
+Daily VaR 95% %,1.1497,1.5,False
