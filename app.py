@@ -33,7 +33,7 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
-#MainMenu, footer, header { visibility: hidden; }
+#MainMenu, footer { visibility: hidden; }
 .block-container { padding: 0 1.5rem 2rem 1.5rem !important; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
