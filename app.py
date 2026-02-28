@@ -34,7 +34,7 @@ CSS = """
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
 #MainMenu, footer { visibility: hidden; }
-.block-container { padding: 0 1.5rem 2rem 1.5rem !important; }
+.block-container { padding: 1rem 1.5rem 2rem 1.5rem !important; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #060d1a; }
