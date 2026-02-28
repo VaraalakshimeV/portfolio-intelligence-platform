@@ -71,20 +71,26 @@ I designed and built an end-to-end portfolio analytics platform that ingests liv
 ```
 
 ---
-
 ## 🎬 Application Showcase
 
 ### **Executive Overview**
 <img width="1617" height="823" alt="image" src="https://github.com/user-attachments/assets/1851d55c-eb67-4dd9-8950-55b440e6e496" />
-
 *5 KPI cards — AUM, ESG Rating, Sharpe Ratio, Daily VaR, Holdings count with donut allocation chart*
+
+---
+
+### **BI Dashboard**
+<img width="1465" height="639" alt="image" src="https://github.com/user-attachments/assets/4c6492df-a0f6-4f65-8e4a-16de555b15df" />
+
+*Embedded Tableau Public dashboard — sector ESG allocation, price trends, interactive drill-downs*
+
+> 📊 **Explore the Tableau Dashboard:** [View on Tableau Public →](https://public.tableau.com/app/profile/varaalakshime.vigneswara.pandiarajan/viz/Book4_17718673615800/Dashboard2)
 
 ---
 
 > 📸 **Want to explore all pages?** [View the Live App →](https://portfolio-intelligence-platform-3fhbbrtae9n8wzankmyuhz.streamlit.app/)
 >
 > *Includes: Login · Risk & Analytics · ESG Intelligence · Investment Signals · Signal Backtest · AI Analyst · Market Data · BI Dashboard*
-
 ## ⚙️ Technical Architecture
 
 ### **Core Components**
