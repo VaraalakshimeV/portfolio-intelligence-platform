@@ -74,50 +74,16 @@ I designed and built an end-to-end portfolio analytics platform that ingests liv
 
 ## 🎬 Application Showcase
 
-### **Login Page**
-*Professional dark navy authentication interface with demo credentials*
-
----
-
 ### **Executive Overview**
+<img width="1617" height="823" alt="image" src="https://github.com/user-attachments/assets/1851d55c-eb67-4dd9-8950-55b440e6e496" />
+
 *5 KPI cards — AUM, ESG Rating, Sharpe Ratio, Daily VaR, Holdings count with donut allocation chart*
 
 ---
 
-### **Risk & Analytics**
-*Parametric VaR, return distribution curve, S&P 500 benchmark comparison, stress test scenarios*
-
----
-
-### **ESG Intelligence**
-*3-pillar gauge charts, company ESG comparison across all 15 holdings, methodology table*
-
----
-
-### **Investment Signals**
-*BUY/HOLD/SELL engine — composite score ranking, signal distribution donut, factor model roadmap*
-
----
-
-### **Signal Backtest**
-*30/60/90-day directional accuracy vs random baseline, forward return validation by signal type*
-
----
-
-### **AI Analyst**
-*RAG-powered chatbot — portfolio-aware Q&A grounded in actual holdings, risk metrics, and ESG data*
-
----
-
-### **Market Data**
-*Live OHLCV candlestick charts, trading volume, fundamental metrics (P/E, Beta, Market Cap)*
-
----
-
-### **BI Dashboard**
-*Embedded Tableau Public dashboard — sector ESG allocation, price trends, interactive drill-downs*
-
----
+> 📸 **Want to explore all pages?** [View the Live App →](https://portfolio-intelligence-platform-3fhbbrtae9n8wzankmyuhz.streamlit.app/)
+>
+> *Includes: Login · Risk & Analytics · ESG Intelligence · Investment Signals · Signal Backtest · AI Analyst · Market Data · BI Dashboard*
 
 ## ⚙️ Technical Architecture
 
