@@ -436,8 +436,25 @@ else:
     with st.sidebar:
         st.markdown("""
         <div class="sidebar-brand">
-            <div class="sidebar-logo">Port<span>.</span></div>
-            <div class="sidebar-tagline">Portfolio Intelligence Platform</div>
+            <div style="display:flex; align-items:center; gap:0.65rem;">
+                <svg width="38" height="38" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+                    <rect x="2" y="2" width="44" height="44" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+                    <rect x="2" y="2" width="44" height="3" fill="#3b82f6"/>
+                    <defs>
+                        <linearGradient id="logofade" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#10b981"/>
+                            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M9 35 L17 22 L24 28 L32 14 L40 18 L40 38 L9 38 Z" fill="url(#logofade)" opacity="0.4"/>
+                    <path d="M9 35 L17 22 L24 28 L32 14 L40 18" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <circle cx="32" cy="14" r="2.5" fill="#ffffff"/>
+                </svg>
+                <div>
+                    <div class="sidebar-logo">Vantage<span>Port</span>.</div>
+                    <div class="sidebar-tagline">Portfolio Intelligence</div>
+                </div>
+            </div>
         </div>""", unsafe_allow_html=True)
         st.markdown('<div class="sidebar-section">Navigation</div>', unsafe_allow_html=True)
         page = st.radio("nav", [
