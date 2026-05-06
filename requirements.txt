@@ -13,6 +13,12 @@ requests
 pydantic-settings
 sentence-transformers
 
+# LangChain RAG
+langchain
+langchain-community
+langchain-google-genai
+langchain-pinecone
+
 # ML upgrades
 arch
 mlflow
