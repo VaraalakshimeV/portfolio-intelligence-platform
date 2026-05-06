@@ -111,9 +111,9 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] > label { display:none 
 }
 .kpi-card:hover { border-color:#2563eb; transform:translateY(-2px); box-shadow:0 6px 20px rgba(37,99,235,0.13); }
 .kpi-card::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#2563eb,#93c5fd); }
-.kpi-label { font-size:0.65rem; font-weight:700; color:#94a3b8 !important; text-transform:uppercase; letter-spacing:0.11em; margin-bottom:0.35rem; }
-.kpi-value { font-size:1.55rem; font-weight:800; color:#0f172a !important; letter-spacing:-0.03em; line-height:1; margin-bottom:0.4rem; }
-.kpi-delta { font-size:0.7rem; font-weight:600; display:inline-flex; align-items:center; gap:0.3rem; padding:0.16rem 0.55rem; border-radius:20px; }
+.kpi-label { font-size:0.62rem; font-weight:700; color:#94a3b8 !important; text-transform:uppercase; letter-spacing:0.09em; margin-bottom:0.35rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kpi-value { font-size:1.45rem; font-weight:800; color:#0f172a !important; letter-spacing:-0.03em; line-height:1; margin-bottom:0.4rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kpi-delta { font-size:0.66rem; font-weight:600; display:inline-flex; align-items:center; gap:0.3rem; padding:0.16rem 0.55rem; border-radius:20px; white-space:nowrap; max-width:100%; }
 .kpi-delta-pos { background:rgba(16,185,129,0.08); color:#059669 !important; border:1px solid rgba(16,185,129,0.22); }
 .kpi-delta-neg { background:rgba(239,68,68,0.08);  color:#dc2626 !important; border:1px solid rgba(239,68,68,0.22); }
 .kpi-delta-neu { background:rgba(37,99,235,0.08);  color:#2563eb !important; border:1px solid rgba(37,99,235,0.22); }
