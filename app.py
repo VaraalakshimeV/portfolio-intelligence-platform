@@ -263,7 +263,7 @@ def top_bar(page_name):
     <div class="topbar">
         <div class="topbar-scan"></div>
         <div class="topbar-left">
-            <span class="topbar-brand">PIP</span>
+            <span class="topbar-brand">VantagePort</span>
             <span class="topbar-sep">/</span>
             <span class="topbar-page">{page_name}</span>
         </div>
