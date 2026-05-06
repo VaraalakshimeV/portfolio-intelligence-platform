@@ -14,7 +14,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 import pickle
+import mlflow
+import mlflow.sklearn
 from src.data_pipeline.collector import DataCollector
+from src.risk_engine.garch_model import GARCHVolatilityModel
 
 class PortfolioRiskPredictor:
     """
@@ -102,12 +105,25 @@ class PortfolioRiskPredictor:
         
         y_pred = self.model.predict(X_test_scaled)
         mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
-        
+
+        # Naive persistence baseline: predict tomorrow's vol = today's vol
+        naive_pred = y_test.shift(1).dropna()
+        y_aligned = y_test.loc[naive_pred.index]
+        naive_mape = np.mean(np.abs((y_aligned - naive_pred) / y_aligned)) * 100
+        naive_r2 = float(
+            1 - np.sum((y_aligned - naive_pred) ** 2) /
+            np.sum((y_aligned - y_aligned.mean()) ** 2)
+        )
+        improvement = (naive_mape - mape) / naive_mape * 100
+
         return {
             'train_r2': train_r2,
             'test_r2': test_r2,
             'mape': mape,
-            'n_features': len(self.feature_names)
+            'n_features': len(self.feature_names),
+            'naive_mape': round(naive_mape, 2),
+            'naive_r2': round(naive_r2, 3),
+            'improvement_over_naive_pct': round(improvement, 1),
         }
     
     def predict(self, recent_returns: pd.Series) -> dict:
@@ -167,10 +183,17 @@ if __name__ == "__main__":
         metrics = predictor.train(returns)
         
         print(f"\n   ✓ Model trained!")
-        print(f"   • Train R²: {metrics['train_r2']:.3f}")
-        print(f"   • Test R²: {metrics['test_r2']:.3f}")
-        print(f"   • MAPE: {metrics['mape']:.2f}%")
-        print(f"   • Features: {metrics['n_features']}")
+        print(f"   • Train R²:  {metrics['train_r2']:.3f}")
+        print(f"   • Test R²:   {metrics['test_r2']:.3f}")
+        print(f"   • MAPE:      {metrics['mape']:.2f}%")
+        print(f"   • Features:  {metrics['n_features']}")
+        print(f"\n   Baseline comparison (naive persistence):")
+        print(f"   • RF MAPE:    {metrics['mape']:.2f}%")
+        print(f"   • Naive MAPE: {metrics['naive_mape']:.2f}%")
+        print(f"   • Naive R²:   {metrics['naive_r2']:.3f}")
+        beat = metrics['improvement_over_naive_pct'] > 0
+        print(f"   • Improvement over naive: {metrics['improvement_over_naive_pct']:.1f}%  "
+              f"{'✓ RF beats baseline' if beat else '✗ RF does NOT beat baseline'}")
         
         print("\n3. Testing prediction...")
         prediction = predictor.predict(returns.tail(50))
@@ -181,16 +204,69 @@ if __name__ == "__main__":
         importance = predictor.get_feature_importance()
         for i, row in importance.head(5).iterrows():
             print(f"   {row['Feature']}: {row['Importance']:.3f}")
-        
+
         predictor.save()
-        
+
+        # ── MLflow: log Random Forest run ─────────────────────────────────────
+        print("\n5. Logging to MLflow...")
+        mlflow.set_experiment("portfolio-volatility-forecasting")
+
+        with mlflow.start_run(run_name="random_forest_baseline"):
+            mlflow.log_params({
+                "model":        "RandomForest",
+                "n_estimators": 100,
+                "max_depth":    10,
+                "n_features":   metrics['n_features'],
+                "ticker":       "SPY",
+                "period":       "2y",
+            })
+            mlflow.log_metrics({
+                "train_r2":                metrics['train_r2'],
+                "test_r2":                 metrics['test_r2'],
+                "mape":                    metrics['mape'],
+                "naive_mape":              metrics['naive_mape'],
+                "naive_r2":                metrics['naive_r2'],
+                "improvement_over_naive":  metrics['improvement_over_naive_pct'],
+            })
+            mlflow.sklearn.log_model(predictor.model, "random_forest_model")
+            print("   ✓ Random Forest run logged")
+
+        # ── GARCH(1,1) ────────────────────────────────────────────────────────
+        print("\n6. Training GARCH(1,1) model...")
+        garch = GARCHVolatilityModel(p=1, q=1)
+        g = garch.fit_and_forecast("SPY", returns)
+
+        print(f"   ✓ GARCH trained")
+        print(f"   • alpha (ARCH):      {g['alpha']:.4f}")
+        print(f"   • beta  (GARCH):     {g['beta']:.4f}")
+        print(f"   • persistence:       {g['persistence']:.4f}  "
+              f"{'(high vol memory)' if g['persistence'] > 0.9 else '(moderate vol memory)'}")
+        print(f"   • AIC:               {g['aic']:.2f}")
+        print(f"   • Forecast ann. vol: {g['forecast_ann_vol']*100:.2f}%")
+
+        garch.save()
+
+        with mlflow.start_run(run_name="garch_1_1_student_t"):
+            mlflow.log_params({
+                "model":  "GARCH(1,1)",
+                "p":      1,
+                "q":      1,
+                "dist":   "Student-t",
+                "ticker": "SPY",
+                "period": "2y",
+            })
+            mlflow.log_metrics({
+                "aic":              g['aic'],
+                "bic":              g['bic'],
+                "alpha":            g['alpha'],
+                "beta":             g['beta'],
+                "persistence":      g['persistence'],
+                "forecast_ann_vol": g['forecast_ann_vol'],
+            })
+            print("   ✓ GARCH run logged")
+
         print("\n" + "=" * 70)
-        print("✅ CUSTOM ML MODEL COMPLETE!")
+        print("✅ TRAINING COMPLETE — 2 models logged to MLflow")
         print("=" * 70)
-        
-        print("\n💡 Why This Impresses Recruiters:")
-        print("   ✓ YOU built an ML model (not just API calls)")
-        print("   ✓ Solves real problem (volatility forecasting)")
-        print("   ✓ Uses domain knowledge (financial features)")
-        print("   ✓ Outperforms GPT-4 on numerical tasks")
-        print("   ✓ Production-ready (saved model, fast inference)")
+        print("\nTo view MLflow UI:  mlflow ui")
+        print("Then open:          http://localhost:5000")

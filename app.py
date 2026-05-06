@@ -23,195 +23,232 @@ from src.esg_engine.calculator import ESGCalculator
 
 st.set_page_config(
     page_title="Portfolio Intelligence Platform",
-    page_icon="📈",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', sans-serif !important; }
-#MainMenu, footer { visibility: hidden; }
-.block-container { padding: 1rem 1.5rem 2rem 1.5rem !important; }
+/* ── Keyframe animations ── */
+@keyframes pageIn       { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn       { from { opacity:0; } to { opacity:1; } }
+@keyframes cardIn       { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes topbarScan   { 0% { left:-35%; } 100% { left:120%; } }
+@keyframes onlinePulse  { 0%,100% { box-shadow:0 0 0 0 rgba(16,185,129,0.5); } 60% { box-shadow:0 0 0 5px rgba(16,185,129,0); } }
+@keyframes barFill      { from { width:0%; } to { width:var(--w); } }
+@keyframes sectionReveal{ from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #060d1a; }
-::-webkit-scrollbar-thumb { background: #1a3358; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2563eb; }
+/* ── Base ── */
+html, body, [class*="css"] { font-family:'Inter',sans-serif !important; }
+#MainMenu, footer { visibility:hidden; }
+header[data-testid="stHeader"] { display:none !important; }
+.block-container { padding:0.75rem 1.5rem 2rem 1.5rem !important; background:#eef2f7 !important; animation:pageIn 0.28s ease forwards; }
 
-section[data-testid="stSidebar"] {
-    background: #060d1a !important;
-    border-right: 1px solid #1a3358 !important;
-    padding-top: 0 !important;
-}
-section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
-section[data-testid="stSidebar"] * { color: #8ba4c0 !important; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:#2563eb; }
+
+/* ── Sidebar ── */
+section[data-testid="stSidebar"] { background:#0f172a !important; border-right:1px solid rgba(255,255,255,0.05) !important; padding-top:0 !important; }
+section[data-testid="stSidebar"] > div { padding-top:0 !important; }
+section[data-testid="stSidebar"] * { color:#7c93b0 !important; }
 section[data-testid="stSidebar"] .stRadio label {
-    padding: 0.55rem 0.85rem !important;
-    border-radius: 6px !important;
-    cursor: pointer !important;
-    transition: all 0.18s ease !important;
-    font-size: 0.82rem !important;
-    font-weight: 500 !important;
-    width: 100% !important;
-    display: block !important;
+    padding:0.48rem 0.9rem !important; border-radius:6px !important; cursor:pointer !important;
+    transition:all 0.15s ease !important; font-size:0.79rem !important; font-weight:500 !important;
+    width:100% !important; display:block !important;
+    border-left:2px solid transparent !important; margin-bottom:1px !important;
 }
 section[data-testid="stSidebar"] .stRadio label:hover {
-    background: rgba(37,99,235,0.12) !important;
-    color: #93c5fd !important;
+    background:rgba(255,255,255,0.06) !important;
+    color:#e2e8f0 !important;
+    border-left-color:#3b82f6 !important;
 }
+section[data-testid="stSidebar"] [data-testid="stRadio"] > label { display:none !important; }
 
+/* ── Topbar ── */
 .topbar {
-    background: linear-gradient(90deg, #060d1a 0%, #0a1f3d 60%, #0f2456 100%);
-    border: 1px solid #1a3358; border-radius: 10px;
-    padding: 0.75rem 1.5rem;
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1.2rem; position: relative; overflow: hidden;
+    background:linear-gradient(90deg, #0f172a 0%, #1e3a8a 45%, #1d4ed8 80%, #2563eb 100%);
+    border-radius:10px; padding:0.7rem 1.4rem;
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:1.2rem; position:relative; overflow:hidden;
+    box-shadow:0 4px 24px rgba(15,23,42,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
 }
-.topbar::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, #2563eb, #c9a84c, #2563eb);
+.topbar::after {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
 }
-.topbar-brand { font-size: 1rem; font-weight: 800; color: #f0f6ff !important; letter-spacing: -0.02em; }
-.topbar-sep { color: #1a3358 !important; font-size: 1.2rem; margin: 0 0.5rem; }
-.topbar-page { font-size: 0.95rem; font-weight: 600; color: #c9a84c !important; }
-.topbar-badge {
-    background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.3);
-    border-radius: 20px; padding: 0.3rem 0.85rem;
-    font-size: 0.75rem; font-weight: 600; color: #93c5fd !important;
+.topbar-scan {
+    position:absolute; top:0; bottom:0; width:30%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.035), transparent);
+    animation:topbarScan 5s ease-in-out infinite;
 }
-.topbar-user { font-size: 0.78rem; color: #8ba4c0 !important; text-align: right; }
-.topbar-user span { display: block; font-weight: 600; color: #c9d8f0 !important; font-size: 0.82rem; }
-.topbar-right { display: flex; align-items: center; gap: 1rem; }
-.topbar-left  { display: flex; align-items: center; }
+.topbar-brand { font-size:1rem; font-weight:900; color:#ffffff !important; letter-spacing:-0.03em; }
+.topbar-sep   { color:rgba(255,255,255,0.25) !important; font-size:1.1rem; margin:0 0.6rem; }
+.topbar-page  { font-size:0.88rem; font-weight:600; color:#93c5fd !important; letter-spacing:0.01em; }
+.topbar-date  { font-size:0.72rem; color:rgba(255,255,255,0.4) !important; font-weight:500; letter-spacing:0.02em; }
+.topbar-badge { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:0.28rem 0.85rem; font-size:0.72rem; font-weight:600; color:#ffffff !important; }
+.topbar-user  { font-size:0.72rem; color:rgba(255,255,255,0.5) !important; text-align:right; line-height:1.4; }
+.topbar-user span { display:block; font-weight:700; color:#ffffff !important; font-size:0.82rem; }
+.topbar-right { display:flex; align-items:center; gap:1rem; }
+.topbar-left  { display:flex; align-items:center; }
 
-.page-hero {
-    background: linear-gradient(135deg, #0d1e35 0%, #0a1628 100%);
-    border: 1px solid #1a3358; border-radius: 10px;
-    padding: 1.2rem 1.8rem; margin-bottom: 1.5rem;
-    position: relative; overflow: hidden;
-}
-.page-hero::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px; background: linear-gradient(180deg, #2563eb, #c9a84c);
-}
-.page-hero-title { font-size: 1.05rem; font-weight: 700; color: #f0f6ff !important; margin-bottom: 0.3rem; }
-.page-hero-desc  { font-size: 0.78rem; color: #6b7f96 !important; line-height: 1.55; max-width: 820px; }
-.page-hero-tags  { margin-top: 0.65rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.hero-tag {
-    background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
-    border-radius: 20px; padding: 0.18rem 0.6rem;
-    font-size: 0.67rem; font-weight: 600; color: #93c5fd !important; letter-spacing: 0.04em;
-}
+/* ── Section header ── */
+.section-header { display:flex; align-items:center; gap:0.6rem; margin:1.4rem 0 0.7rem; animation:sectionReveal 0.25s ease forwards; }
+.section-header-line { width:3px; height:17px; background:linear-gradient(180deg,#2563eb,#93c5fd); border-radius:2px; flex-shrink:0; }
+.section-header-text { font-size:0.88rem; font-weight:700; color:#0f172a !important; letter-spacing:-0.01em; }
 
-.insight-box {
-    background: linear-gradient(135deg, #0d1e35, #0a1f3d);
-    border: 1px solid #1a3358; border-left: 3px solid #c9a84c;
-    border-radius: 0 8px 8px 0; padding: 1rem 1.2rem; margin: 0.75rem 0;
-}
-.insight-box-title { font-size: 0.68rem; font-weight: 700; color: #c9a84c !important; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.4rem; }
-.insight-box-text  { font-size: 0.8rem; color: #8ba4c0 !important; line-height: 1.65; }
-.insight-box-text strong { color: #c9d8f0 !important; }
-
-.section-header { display: flex; align-items: center; gap: 0.6rem; margin: 1.5rem 0 0.75rem; }
-.section-header-line { width: 3px; height: 18px; background: linear-gradient(180deg, #2563eb, #c9a84c); border-radius: 2px; flex-shrink: 0; }
-.section-header-text { font-size: 0.92rem; font-weight: 700; color: #c9d8f0 !important; }
-
+/* ── KPI cards ── */
 .kpi-card {
-    background: linear-gradient(145deg, #0d1e35, #0f2348);
-    border: 1px solid #1a3358; border-radius: 10px;
-    padding: 1.2rem 1.3rem; position: relative; overflow: hidden;
-    transition: border-color 0.2s, transform 0.2s; height: 100%;
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:10px;
+    padding:1.15rem 1.25rem; position:relative; overflow:hidden;
+    transition:border-color 0.2s, transform 0.22s, box-shadow 0.22s; height:100%;
+    box-shadow:0 1px 4px rgba(0,0,0,0.05);
+    animation:cardIn 0.3s ease forwards;
 }
-.kpi-card:hover { border-color: #2563eb; transform: translateY(-1px); }
-.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(37,99,235,0.4), transparent); }
-.kpi-icon   { font-size: 1.3rem; margin-bottom: 0.45rem; display: block; }
-.kpi-label  { font-size: 0.67rem; font-weight: 600; color: #445771 !important; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
-.kpi-value  { font-size: 1.6rem; font-weight: 800; color: #f0f6ff !important; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.4rem; }
-.kpi-delta  { font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.55rem; border-radius: 20px; }
-.kpi-delta-pos { background: rgba(16,185,129,0.12); color: #10b981 !important; border: 1px solid rgba(16,185,129,0.2); }
-.kpi-delta-neg { background: rgba(239,68,68,0.12);  color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.2); }
-.kpi-delta-neu { background: rgba(37,99,235,0.12);  color: #93c5fd !important; border: 1px solid rgba(37,99,235,0.2); }
+.kpi-card:hover { border-color:#2563eb; transform:translateY(-2px); box-shadow:0 6px 20px rgba(37,99,235,0.13); }
+.kpi-card::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#2563eb,#93c5fd); }
+.kpi-label { font-size:0.65rem; font-weight:700; color:#94a3b8 !important; text-transform:uppercase; letter-spacing:0.11em; margin-bottom:0.35rem; }
+.kpi-value { font-size:1.55rem; font-weight:800; color:#0f172a !important; letter-spacing:-0.03em; line-height:1; margin-bottom:0.4rem; }
+.kpi-delta { font-size:0.7rem; font-weight:600; display:inline-flex; align-items:center; gap:0.3rem; padding:0.16rem 0.55rem; border-radius:20px; }
+.kpi-delta-pos { background:rgba(16,185,129,0.08); color:#059669 !important; border:1px solid rgba(16,185,129,0.22); }
+.kpi-delta-neg { background:rgba(239,68,68,0.08);  color:#dc2626 !important; border:1px solid rgba(239,68,68,0.22); }
+.kpi-delta-neu { background:rgba(37,99,235,0.08);  color:#2563eb !important; border:1px solid rgba(37,99,235,0.22); }
 
-.metric-card { border-radius: 10px; padding: 1.35rem 1.5rem; border: 1px solid; position: relative; overflow: hidden; transition: transform 0.2s; }
-.metric-card:hover { transform: translateY(-2px); }
-.metric-card-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.65; margin-bottom: 0.4rem; }
-.metric-card-value { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.3rem; }
-.metric-card-sub   { font-size: 0.7rem; opacity: 0.55; }
+/* ── Metric cards ── */
+.metric-card { border-radius:10px; padding:1.15rem 1.25rem; border:1px solid #e2e8f0; border-top-width:3px; position:relative; transition:transform 0.2s, box-shadow 0.2s; background:#ffffff; box-shadow:0 1px 4px rgba(0,0,0,0.05); animation:cardIn 0.3s ease forwards; }
+.metric-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.09); }
+.metric-card-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.11em; margin-bottom:0.38rem; }
+.metric-card-value { font-size:1.7rem; font-weight:800; letter-spacing:-0.03em; line-height:1; margin-bottom:0.28rem; }
+.metric-card-sub   { font-size:0.67rem; }
 
-.risk-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1.1rem; border-radius: 20px; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.06em; }
-.risk-badge::before { content: '●'; font-size: 0.5rem; }
-.risk-low    { background: rgba(16,185,129,0.1); color: #10b981 !important; border: 1px solid rgba(16,185,129,0.3); }
-.risk-medium { background: rgba(245,158,11,0.1); color: #f59e0b !important; border: 1px solid rgba(245,158,11,0.3); }
-.risk-high   { background: rgba(239,68,68,0.1);  color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.3); }
+/* ── Risk & signal badges ── */
+.risk-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.42rem 1rem; border-radius:20px; font-weight:700; font-size:0.76rem; letter-spacing:0.06em; }
+.risk-badge::before { content:'●'; font-size:0.48rem; }
+.risk-low    { background:rgba(16,185,129,0.08); color:#059669 !important; border:1px solid rgba(16,185,129,0.25); }
+.risk-medium { background:rgba(245,158,11,0.08); color:#d97706 !important; border:1px solid rgba(245,158,11,0.25); }
+.risk-high   { background:rgba(239,68,68,0.08);  color:#dc2626 !important; border:1px solid rgba(239,68,68,0.25); }
 
-.sig-badge   { display: inline-block; padding: 0.28rem 0.8rem; border-radius: 20px; font-weight: 700; font-size: 0.73rem; letter-spacing: 0.06em; }
-.signal-buy  { background: rgba(16,185,129,0.12); color: #10b981 !important; border: 1px solid rgba(16,185,129,0.3); }
-.signal-hold { background: rgba(37,99,235,0.12);  color: #93c5fd !important; border: 1px solid rgba(37,99,235,0.3); }
-.signal-sell { background: rgba(239,68,68,0.12);  color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.3); }
+.sig-badge  { display:inline-block; padding:0.26rem 0.75rem; border-radius:20px; font-weight:700; font-size:0.7rem; letter-spacing:0.06em; }
+.signal-buy  { background:rgba(16,185,129,0.08); color:#059669 !important; border:1px solid rgba(16,185,129,0.25); }
+.signal-hold { background:rgba(37,99,235,0.08);  color:#2563eb !important; border:1px solid rgba(37,99,235,0.25); }
+.signal-sell { background:rgba(239,68,68,0.08);  color:#dc2626 !important; border:1px solid rgba(239,68,68,0.25); }
 
-.styled-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.styled-table th { background: #0a1628; color: #445771 !important; font-size: 0.67rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; padding: 0.75rem 1rem; border-bottom: 1px solid #1a3358; text-align: left; }
-.styled-table td { padding: 0.68rem 1rem; color: #c9d8f0 !important; border-bottom: 1px solid rgba(26,51,88,0.5); vertical-align: middle; }
-.styled-table tr:hover td { background: rgba(37,99,235,0.04); }
-.styled-table tr:last-child td { border-bottom: none; }
-.table-wrap { background: #0d1e35; border: 1px solid #1a3358; border-radius: 10px; overflow: hidden; }
+/* ── Tables ── */
+.styled-table { width:100%; border-collapse:collapse; font-size:0.81rem; }
+.styled-table th { background:#f8fafc; color:#64748b !important; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; padding:0.7rem 1rem; border-bottom:2px solid #e2e8f0; text-align:left; }
+.styled-table td { padding:0.65rem 1rem; color:#1e293b !important; border-bottom:1px solid #f1f5f9; vertical-align:middle; transition:background 0.15s; }
+.styled-table tr:hover td { background:#eff6ff; }
+.styled-table tr:last-child td { border-bottom:none; }
+.table-wrap { background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
 
-.esg-bar-wrap   { margin-bottom: 1rem; }
-.esg-bar-header { display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.35rem; }
-.esg-bar-label  { color: #8ba4c0 !important; font-weight: 500; }
-.esg-bar-score  { color: #f0f6ff !important; font-weight: 700; }
-.esg-bar-track  { background: #1a3358; border-radius: 4px; height: 7px; overflow: hidden; }
-.esg-bar-fill   { height: 100%; border-radius: 4px; }
+/* ── ESG bars ── */
+.esg-bar-wrap   { margin-bottom:1rem; }
+.esg-bar-header { display:flex; justify-content:space-between; font-size:0.77rem; margin-bottom:0.32rem; }
+.esg-bar-label  { color:#475569 !important; font-weight:500; }
+.esg-bar-score  { color:#0f172a !important; font-weight:700; }
+.esg-bar-track  { background:#e2e8f0; border-radius:4px; height:6px; overflow:hidden; }
+.esg-bar-fill   { height:100%; border-radius:4px; animation:barFill 0.8s cubic-bezier(0.16,1,0.3,1) forwards; }
 
-.info-pill { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.72rem; color: #93c5fd !important; font-weight: 500; }
-.chart-frame { background: #0d1e35; border: 1px solid #1a3358; border-radius: 10px; padding: 1rem 1rem 0.25rem; margin-top: 0.25rem; }
-.pip-divider { border: none; border-top: 1px solid #1a3358; margin: 1.25rem 0; }
+/* ── Chart frame ── */
+.chart-frame { background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1rem 1rem 0.25rem; margin-top:0.25rem; box-shadow:0 1px 4px rgba(0,0,0,0.05); transition:box-shadow 0.2s; }
+.chart-frame:hover { box-shadow:0 4px 16px rgba(0,0,0,0.08); }
 
-.login-box { background: linear-gradient(145deg, #0d1e35, #0a1628); border: 1px solid #1a3358; border-radius: 14px; padding: 2.8rem 2.5rem 2rem; position: relative; overflow: hidden; }
-.login-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #2563eb, #c9a84c, #2563eb); }
-.login-demo { font-size: 0.68rem; color: #445771 !important; text-align: center; margin-top: 1.5rem; line-height: 1.8; background: rgba(26,51,88,0.3); border-radius: 8px; padding: 0.75rem; border: 1px solid #1a3358; }
+/* ── Misc ── */
+.info-pill  { display:inline-flex; align-items:center; gap:0.4rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:20px; padding:0.28rem 0.8rem; font-size:0.7rem; color:#2563eb !important; font-weight:600; }
+.pip-divider{ border:none; border-top:1px solid #e2e8f0; margin:1.2rem 0; }
 
-.sidebar-brand   { padding: 1.4rem 0.85rem 0.8rem; border-bottom: 1px solid #1a3358; margin-bottom: 0.5rem; }
-.sidebar-logo    { font-size: 1.25rem; font-weight: 900; color: #f0f6ff !important; letter-spacing: -0.03em; }
-.sidebar-logo span { color: #c9a84c !important; }
-.sidebar-tagline { font-size: 0.62rem; font-weight: 600; color: #2a3f5a !important; text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.2rem; }
-.sidebar-section { font-size: 0.62rem; font-weight: 700; color: #2a3f5a !important; text-transform: uppercase; letter-spacing: 0.14em; padding: 0.8rem 0.85rem 0.3rem; }
-.sidebar-user      { border-top: 1px solid #1a3358; padding: 0.85rem 0.85rem 0.5rem; margin-top: 0.5rem; }
-.sidebar-user-name { font-size: 0.82rem; font-weight: 600; color: #c9d8f0 !important; }
-.sidebar-user-role { font-size: 0.7rem; color: #445771 !important; margin-top: 0.1rem; }
+/* ── Login ── */
+.login-box { background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:2.8rem 2.5rem 2rem; position:relative; overflow:hidden; box-shadow:0 8px 40px rgba(15,23,42,0.12); }
+.login-box::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#0f172a,#2563eb,#93c5fd); }
+.login-demo { font-size:0.68rem; color:#64748b !important; text-align:center; margin-top:1.5rem; line-height:1.8; background:#f8fafc; border-radius:8px; padding:0.75rem; border:1px solid #e2e8f0; }
 
-div[data-testid="metric-container"] { background: #0d1e35; border: 1px solid #1a3358; border-radius: 10px; padding: 0.75rem 1rem; }
-div[data-testid="metric-container"] label { color: #445771 !important; font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.08em; }
-div[data-testid="metric-container"] [data-testid="stMetricValue"] { color: #f0f6ff !important; font-size: 1.35rem !important; font-weight: 800 !important; }
-.stSelectbox > div > div { background: #0d1e35 !important; border-color: #1a3358 !important; color: #c9d8f0 !important; }
-.stTextInput > div > div > input { background: #0d1e35 !important; border-color: #1a3358 !important; color: #c9d8f0 !important; }
-.stButton > button[kind="primary"] { background: linear-gradient(135deg, #1d4ed8, #2563eb) !important; border: none !important; font-weight: 600 !important; border-radius: 8px !important; }
-.stButton > button:not([kind="primary"]) { background: transparent !important; border: 1px solid #1a3358 !important; color: #8ba4c0 !important; border-radius: 8px !important; }
-.stButton > button:not([kind="primary"]):hover { border-color: #2563eb !important; color: #93c5fd !important; }
-.stCaption { color: #445771 !important; font-size: 0.7rem !important; }
-.stAlert { border-radius: 8px !important; }
+/* ── Sidebar branding ── */
+.sidebar-brand   { padding:1.35rem 0.9rem 0.85rem; border-bottom:1px solid rgba(255,255,255,0.07); margin-bottom:0.4rem; }
+.sidebar-logo    { font-size:1.3rem; font-weight:900; color:#ffffff !important; letter-spacing:-0.04em; }
+.sidebar-logo span { color:#3b82f6 !important; }
+.sidebar-tagline { font-size:0.58rem; font-weight:600; color:rgba(255,255,255,0.3) !important; text-transform:uppercase; letter-spacing:0.14em; margin-top:0.2rem; }
+.sidebar-section { font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.28) !important; text-transform:uppercase; letter-spacing:0.16em; padding:0.85rem 0.9rem 0.3rem; }
+.sidebar-user      { border-top:1px solid rgba(255,255,255,0.07); padding:0.85rem 0.9rem 0.5rem; margin-top:0.5rem; }
+.sidebar-user-name { font-size:0.81rem; font-weight:600; color:#ffffff !important; }
+.sidebar-user-role { font-size:0.68rem; color:#3b82f6 !important; margin-top:0.1rem; }
+.online-dot { display:inline-block; width:7px; height:7px; background:#10b981; border-radius:50%; margin-right:0.35rem; animation:onlinePulse 2.2s ease infinite; }
+
+/* ── Page hero ── */
+.page-hero { background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 100%); border-radius:10px; padding:1.15rem 1.6rem; margin-bottom:1.4rem; position:relative; overflow:hidden; }
+.page-hero::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#ffffff,#93c5fd); }
+.page-hero-title { font-size:1rem; font-weight:700; color:#ffffff !important; margin-bottom:0.25rem; }
+.page-hero-desc  { font-size:0.76rem; color:#bfdbfe !important; line-height:1.55; max-width:820px; }
+
+/* ── Insight box ── */
+.insight-box { background:#eff6ff; border:1px solid #bfdbfe; border-left:3px solid #2563eb; border-radius:0 8px 8px 0; padding:0.9rem 1.15rem; margin:0.6rem 0; }
+.insight-box-title { font-size:0.65rem; font-weight:700; color:#1d4ed8 !important; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.35rem; }
+.insight-box-text  { font-size:0.78rem; color:#475569 !important; line-height:1.6; }
+.insight-box-text strong { color:#0f172a !important; }
+
+/* ── Streamlit native overrides ── */
+div[data-testid="metric-container"] { background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:0.75rem 1rem; box-shadow:0 1px 4px rgba(0,0,0,0.05); transition:box-shadow 0.2s, transform 0.2s; }
+div[data-testid="metric-container"]:hover { box-shadow:0 4px 16px rgba(37,99,235,0.1); transform:translateY(-1px); }
+div[data-testid="metric-container"] label { color:#94a3b8 !important; font-size:0.67rem !important; text-transform:uppercase; letter-spacing:0.09em; }
+div[data-testid="metric-container"] [data-testid="stMetricValue"] { color:#0f172a !important; font-size:1.32rem !important; font-weight:800 !important; }
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] { font-size:0.76rem !important; font-weight:600 !important; }
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] svg { display:none; }
+.stSelectbox > div > div { background:#ffffff !important; border-color:#e2e8f0 !important; color:#0f172a !important; border-radius:8px !important; }
+.stSelectbox > div > div > div { color:#0f172a !important; }
+.stTextInput > div > div > input { background:#ffffff !important; border-color:#e2e8f0 !important; color:#0f172a !important; border-radius:8px !important; }
+.stButton > button[kind="primary"] { background:linear-gradient(135deg,#0f172a,#2563eb) !important; border:none !important; font-weight:600 !important; border-radius:8px !important; color:#ffffff !important; transition:opacity 0.15s, transform 0.15s !important; }
+.stButton > button[kind="primary"]:hover { opacity:0.9; transform:translateY(-1px) !important; }
+.stButton > button:not([kind="primary"]) { background:#ffffff !important; border:1px solid #e2e8f0 !important; color:#475569 !important; border-radius:8px !important; transition:all 0.15s !important; }
+.stButton > button:not([kind="primary"]):hover { border-color:#2563eb !important; color:#2563eb !important; background:#eff6ff !important; }
+.stCaption { color:#94a3b8 !important; font-size:0.68rem !important; }
+.stAlert { border-radius:8px !important; }
+div[data-testid="stDataFrame"] { background:#ffffff !important; border-radius:10px; border:1px solid #e2e8f0; }
+div[data-testid="stDataFrame"] * { color:#1e293b !important; }
+div[data-testid="stDataFrame"] th { background:#f8fafc !important; color:#64748b !important; font-size:0.68rem !important; font-weight:700 !important; text-transform:uppercase; letter-spacing:0.07em; }
+p, span, div, label, li, td, th, h1, h2, h3, h4 { -webkit-font-smoothing:antialiased; }
+.block-container p, .block-container span:not([class*="stMarkdown"]) { color:#1e293b; }
+
+/* ── Column gap tightening ── */
+[data-testid="column"] { padding-left:0.4rem !important; padding-right:0.4rem !important; }
+[data-testid="stHorizontalBlock"] { gap:0.6rem !important; }
+
+/* ── Streamlit progress / spinner ── */
+div[data-testid="stSpinner"] p { color:#475569 !important; font-size:0.82rem !important; }
+
+/* ── Chat input bar ── */
+div[data-testid="stChatInput"] { border-color:#e2e8f0 !important; border-radius:10px !important; background:#ffffff !important; }
+div[data-testid="stChatInput"] textarea { color:#0f172a !important; font-size:0.88rem !important; }
+
+/* ── Consistent card row heights ── */
+.kpi-card, .metric-card { min-height:100px; }
+
+/* ── Better divider ── */
+.pip-divider { margin:1rem 0; }
 </style>
 """
 
 PLOTLY_THEME = dict(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#8ba4c0', family='Inter, sans-serif', size=12),
-    xaxis=dict(gridcolor='#1a3358', linecolor='#1a3358', tickcolor='#1a3358'),
-    yaxis=dict(gridcolor='#1a3358', linecolor='#1a3358', tickcolor='#1a3358'),
-    hoverlabel=dict(bgcolor='#0d1e35', bordercolor='#2563eb',
-                    font=dict(color='#f0f6ff', family='Inter')),
+    font=dict(color='#475569', family='Inter, sans-serif', size=12),
+    xaxis=dict(gridcolor='#e2e8f0', linecolor='#e2e8f0', tickcolor='#94a3b8'),
+    yaxis=dict(gridcolor='#e2e8f0', linecolor='#e2e8f0', tickcolor='#94a3b8'),
+    hoverlabel=dict(bgcolor='#1e3a8a', bordercolor='#2563eb',
+                    font=dict(color='#ffffff', family='Inter')),
 )
 
 st.markdown(CSS, unsafe_allow_html=True)
 
+from src.auth.password import verify_password
+
+# Passwords stored as bcrypt hashes — never in plaintext
 USERS = {
-    "analyst@pip.com":  {"password": "Demo@1234",  "name": "Sarah Mitchell",   "role": "Portfolio Analyst",      "initials": "SM"},
-    "manager@pip.com":  {"password": "Demo@1234",  "name": "David Chen",       "role": "Senior Risk Manager",    "initials": "DC"},
-    "admin@pip.com":    {"password": "Admin@5678", "name": "Varaalakshime V.", "role": "Platform Administrator", "initials": "VV"},
+    "analyst@pip.com":  {"password_hash": "$2b$12$76xyyLP.8facMGEosbvsseKYl7YQ7mrf4b5Flf52cFf9jgRNvKpAe", "name": "Sarah Mitchell",   "role": "Portfolio Analyst",      "initials": "SM"},
+    "manager@pip.com":  {"password_hash": "$2b$12$76xyyLP.8facMGEosbvsseKYl7YQ7mrf4b5Flf52cFf9jgRNvKpAe", "name": "David Chen",       "role": "Senior Risk Manager",    "initials": "DC"},
+    "admin@pip.com":    {"password_hash": "$2b$12$eY81cc2/5Ay7hIa7pvgUZu15i1Rpod.f/hb2RfKlxUDHODQz2UtVO", "name": "Varaalakshime V.", "role": "Platform Administrator", "initials": "VV"},
 }
 
 for k, d in [("logged_in", False), ("user", None)]:
@@ -219,15 +256,19 @@ for k, d in [("logged_in", False), ("user", None)]:
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def top_bar(page_name):
-    u = st.session_state.user
+    from datetime import datetime
+    u    = st.session_state.user
+    now  = datetime.now().strftime("%d %b %Y  %H:%M")
     st.markdown(f"""
     <div class="topbar">
+        <div class="topbar-scan"></div>
         <div class="topbar-left">
             <span class="topbar-brand">PIP</span>
             <span class="topbar-sep">/</span>
             <span class="topbar-page">{page_name}</span>
         </div>
         <div class="topbar-right">
+            <span class="topbar-date">{now}</span>
             <span class="topbar-badge">{u['role']}</span>
             <div class="topbar-user"><span>{u['name']}</span>{u['initials']}</div>
         </div>
@@ -248,7 +289,7 @@ def page_hero(title, description, tags=None):
 def insight_box(title, text):
     st.markdown(f"""
     <div class="insight-box">
-        <div class="insight-box-title">💡 {title}</div>
+        <div class="insight-box-title">{title}</div>
         <div class="insight-box-text">{text}</div>
     </div>""", unsafe_allow_html=True)
 
@@ -259,23 +300,22 @@ def section_header(text):
         <div class="section-header-text">{text}</div>
     </div>""", unsafe_allow_html=True)
 
-def kpi_card(label, value, delta, delta_type="pos", icon=""):
+def kpi_card(label, value, delta, delta_type="pos"):
     cls   = f"kpi-delta-{delta_type}"
     arrow = "↑" if delta_type == "pos" else ("↓" if delta_type == "neg" else "→")
     st.markdown(f"""
     <div class="kpi-card">
-        <div class="kpi-icon">{icon}</div>
         <div class="kpi-label">{label}</div>
         <div class="kpi-value">{value}</div>
         <span class="kpi-delta {cls}">{arrow} {delta}</span>
     </div>""", unsafe_allow_html=True)
 
-def metric_card(label, value, sub, bg1, bg2, border):
+def metric_card(label, value, sub, accent):
     st.markdown(f"""
-    <div class="metric-card" style="background:linear-gradient(135deg,{bg1},{bg2});border-color:{border};color:white;">
-        <div class="metric-card-label">{label}</div>
-        <div class="metric-card-value">{value}</div>
-        <div class="metric-card-sub">{sub}</div>
+    <div class="metric-card" style="background:#ffffff;border-color:#e2e8f0;border-top:3px solid {accent};">
+        <div class="metric-card-label" style="color:#94a3b8;">{label}</div>
+        <div class="metric-card-value" style="color:{accent};">{value}</div>
+        <div class="metric-card-sub" style="color:#94a3b8;">{sub}</div>
     </div>""", unsafe_allow_html=True)
 
 def esg_bar(label, score, color):
@@ -283,10 +323,10 @@ def esg_bar(label, score, color):
     <div class="esg-bar-wrap">
         <div class="esg-bar-header">
             <span class="esg-bar-label">{label}</span>
-            <span class="esg-bar-score">{score:.1f}<span style="font-size:0.65rem;color:#445771;font-weight:400;"> / 100</span></span>
+            <span class="esg-bar-score">{score:.1f}<span style="font-size:0.63rem;color:#94a3b8;font-weight:400;"> / 100</span></span>
         </div>
         <div class="esg-bar-track">
-            <div class="esg-bar-fill" style="width:{score}%;background:{color};"></div>
+            <div class="esg-bar-fill" style="--w:{score}%;background:{color};"></div>
         </div>
     </div>""", unsafe_allow_html=True)
 
@@ -305,11 +345,11 @@ def show_login():
     with col:
         st.markdown("""
         <div class="login-box">
-            <div style='text-align:center;font-size:2rem;font-weight:900;color:#f0f6ff;
+            <div style='text-align:center;font-size:2rem;font-weight:900;color:#0f172a;
                 letter-spacing:-0.04em;margin-bottom:0.3rem;'>
-                Port<span style='color:#c9a84c;'>.</span>
+                Port<span style='color:#2563eb;'>.</span>
             </div>
-            <div style='text-align:center;font-size:0.68rem;font-weight:600;color:#2a3f5a;
+            <div style='text-align:center;font-size:0.68rem;font-weight:600;color:#64748b;
                 text-transform:uppercase;letter-spacing:0.15em;margin-bottom:2rem;'>
                 Portfolio Intelligence Platform
             </div>
@@ -318,7 +358,7 @@ def show_login():
         password = st.text_input("Password", type="password", placeholder="••••••••")
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Sign In  →", type="primary", use_container_width=True):
-            if email in USERS and USERS[email]["password"] == password:
+            if email in USERS and verify_password(password, USERS[email]["password_hash"]):
                 st.session_state.logged_in = True
                 st.session_state.user = USERS[email]
                 st.rerun()
@@ -326,7 +366,7 @@ def show_login():
                 st.error("Invalid credentials. Please try again.")
         st.markdown("""
         <div class="login-demo">
-            <strong style="color:#8ba4c0;">Demo credentials</strong><br>
+            <strong style="color:#475569;">Demo credentials</strong><br>
             analyst@pip.com &nbsp;/&nbsp; Demo@1234<br>
             manager@pip.com &nbsp;/&nbsp; Demo@1234
         </div>""", unsafe_allow_html=True)
@@ -401,16 +441,15 @@ else:
         </div>""", unsafe_allow_html=True)
         st.markdown('<div class="sidebar-section">Navigation</div>', unsafe_allow_html=True)
         page = st.radio("nav", [
-            "Overview", "Portfolio", "Risk & Analytics", "ESG Intelligence",
-            "Investment Signals", "Performance Attribution", "Backtest",
-            "AI Analyst", "Market Data", "BI Dashboard"
+            "Dashboard", "Holdings", "Risk Analysis", "ESG Scores",
+            "Trade Signals", "Performance Attribution", "Signal Backtest",
+            "AI Assistant", "Price History", "BI Dashboard"
         ], label_visibility="collapsed")
         u = st.session_state.user
         st.markdown(f"""
         <div class="sidebar-user">
             <div class="sidebar-user-name">
-                <span style="width:7px;height:7px;background:#10b981;border-radius:50%;
-                display:inline-block;margin-right:0.35rem;"></span>{u['name']}
+                <span class="online-dot"></span>{u['name']}
             </div>
             <div class="sidebar-user-role">{u['role']}</div>
         </div>""", unsafe_allow_html=True)
@@ -423,23 +462,24 @@ else:
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: OVERVIEW
     # ══════════════════════════════════════════════════════════════════════════
-    if page == "Overview":
-        top_bar("Overview")
-        page_hero(
-            "Executive Portfolio Overview",
-            "Real-time snapshot across 15 holdings — AUM, risk-adjusted performance, ESG health, and diversification in one view.",
-            ["Executive Summary", "15 Holdings", "Daily Briefing", "ESG-Integrated"]
-        )
+    if page == "Dashboard":
+        top_bar("Dashboard")
         portfolio = load_portfolio_data()
         risk      = load_risk_metrics()
         if not portfolio: st.warning("No portfolio data found."); st.stop()
+        _cos    = load_company_esg()
+        sec_map = {c.ticker: c.sector or '—' for c in _cos}
+
+        _hdf = pd.DataFrame(portfolio['holdings'])
+        _ret = (((_hdf['current_price'].fillna(_hdf['purchase_price']) - _hdf['purchase_price'])
+                 / _hdf['purchase_price']) * (_hdf['value'] / _hdf['value'].sum())).sum() * 100
 
         c1,c2,c3,c4,c5 = st.columns(5)
-        with c1: kpi_card("Total AUM",     f"${portfolio['total_value']:,.0f}", "+5.2% YTD",    "pos", "💼")
-        with c2: kpi_card("ESG Rating",    f"{portfolio['esg_rating']}  {portfolio['esg_score']:.0f}", "Responsible", "neu", "🌱")
-        with c3: kpi_card("Sharpe Ratio",  f"{risk['sharpe_ratio']:.2f}" if risk else "—", "Risk-adjusted", "pos", "📐")
-        with c4: kpi_card("Daily VaR 95%", f"${risk['var_95_daily']*portfolio['total_value']:,.0f}" if risk else "—", "Max 1-day loss", "neg", "⚠️")
-        with c5: kpi_card("Holdings",      f"{len(portfolio['holdings'])}", "Diversified", "neu", "📊")
+        with c1: kpi_card("Total AUM",     f"${portfolio['total_value']:,.0f}", f"{_ret:+.1f}% return", "pos" if _ret>=0 else "neg")
+        with c2: kpi_card("ESG Rating",    f"{portfolio['esg_rating']}  {portfolio['esg_score']:.0f}", "Sustainability score", "neu")
+        with c3: kpi_card("Sharpe Ratio",  f"{risk['sharpe_ratio']:.2f}" if risk else "—", "vs S&P 500 ~0.6", "pos")
+        with c4: kpi_card("Daily VaR 95%", f"${risk['var_95_daily']*portfolio['total_value']:,.0f}" if risk else "—", "Max 1-day loss", "neg")
+        with c5: kpi_card("Holdings",      f"{len(portfolio['holdings'])}", f"{len(set(sec_map.get(h['ticker'],'?') for h in portfolio['holdings']))} sectors", "neu")
 
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2 = st.columns([3, 2])
@@ -448,129 +488,116 @@ else:
             hdf = pd.DataFrame(portfolio['holdings'])
             fig = px.pie(hdf, values='value', names='ticker', hole=0.42,
                          color_discrete_sequence=['#2563eb','#3b82f6','#60a5fa','#93c5fd',
-                                                   '#c9a84c','#d4b76a','#1d4ed8','#1e40af',
+                                                   '#7c3aed','#a78bfa','#1d4ed8','#1e40af',
                                                    '#10b981','#0d9488','#6366f1','#8b5cf6',
                                                    '#ec4899','#f43f5e','#475569'])
             fig.update_traces(textposition='inside', textinfo='percent+label', textfont_size=10,
-                              marker=dict(line=dict(color='#060d1a', width=2)))
+                              marker=dict(line=dict(color='#ffffff', width=2)))
             fig.update_layout(**PLOTLY_THEME, height=360, showlegend=True,
                               legend=dict(orientation='v', x=1.02, y=0.5,
-                                          font=dict(size=10, color='#8ba4c0')),
+                                          font=dict(size=10, color='#475569')),
                               margin=dict(t=10, b=10, l=10, r=10))
             fig.add_annotation(text=f"<b>{len(portfolio['holdings'])}</b><br><span style='font-size:10px'>Holdings</span>",
                                x=0.5, y=0.5, showarrow=False,
-                               font=dict(size=14, color='#f0f6ff'), align='center')
+                               font=dict(size=14, color='#0f172a'), align='center')
             st.markdown('<div class="chart-frame">', unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
-            section_header("ESG Pillar Scores")
-            esg_bar("Environmental", portfolio['environmental_score'], "#10b981")
-            esg_bar("Social",        portfolio['social_score'],        "#3b82f6")
-            esg_bar("Governance",    portfolio['governance_score'],    "#8b5cf6")
             if risk:
-                divider()
                 section_header("Risk Snapshot")
                 rc1, rc2 = st.columns(2)
                 with rc1: st.metric("Ann. Volatility", f"{risk['volatility']*100:.1f}%")
                 with rc2: st.metric("Max Drawdown",    f"{risk['max_drawdown']*100:.1f}%")
+                divider()
+                section_header("Top 5 Positions by Weight")
+                hdf_top = pd.DataFrame(portfolio['holdings'])
+                hdf_top['weight'] = hdf_top['value'] / hdf_top['value'].sum() * 100
+                hdf_top = hdf_top.nlargest(5, 'weight')
+                for _, row in hdf_top.iterrows():
+                    st.markdown(f"""
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                         padding:0.45rem 0;border-bottom:1px solid #f1f5f9;">
+                        <span style="font-size:0.82rem;font-weight:700;color:#0f172a;">{row['ticker']}</span>
+                        <span style="font-size:0.82rem;font-weight:600;color:#2563eb;">{row['weight']:.1f}%</span>
+                    </div>""", unsafe_allow_html=True)
 
-        divider()
-        insight_box(
-            "Daily Briefing Summary",
-            f"As of today, your portfolio spans <strong>{len(portfolio['holdings'])} positions</strong> with total AUM of "
-            f"<strong>${portfolio['total_value']:,.0f}</strong>. "
-            f"ESG rating of <strong>{portfolio['esg_rating']} ({portfolio['esg_score']:.1f}/100)</strong> places it in the "
-            f"<strong>{'top quartile' if portfolio['esg_score'] > 70 else 'mid-range'}</strong> of ESG-integrated funds. "
-            + (f"Sharpe ratio of <strong>{risk['sharpe_ratio']:.2f}</strong> reflects "
-               f"<strong>{'strong' if risk['sharpe_ratio'] > 1.5 else 'moderate'}</strong> risk-adjusted performance. "
-               f"Maximum single-day loss at 95% confidence: <strong>${risk['var_95_daily']*portfolio['total_value']:,.0f}</strong>. "
-               f"Navigate to Risk & Analytics for full downside scenario modeling." if risk else "")
-        )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: PORTFOLIO
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "Portfolio":
-        top_bar("Portfolio Analysis")
-        page_hero(
-            "Holdings & Position Management",
-            "Position-level breakdown — shares, cost basis, current price, unrealized return, and portfolio weight across all 15 holdings.",
-            ["Position-Level Detail", "Cost Basis", "Unrealized P&L", "Concentration Risk"]
-        )
+    elif page == "Holdings":
+        top_bar("Holdings")
         portfolio = load_portfolio_data()
         if not portfolio: st.warning("No data."); st.stop()
 
+        hdf_pre = pd.DataFrame(portfolio['holdings'])
+        total_mv  = hdf_pre['value'].sum()
+        top_pos   = hdf_pre.nlargest(1,'value').iloc[0]['ticker']
+        companies = load_company_esg()
+        sec_map   = {c.ticker: c.sector or '—' for c in companies}
+        sectors   = len(set(sec_map.get(h['ticker'],'—') for h in portfolio['holdings']))
+
         c1,c2,c3,c4 = st.columns(4)
-        with c1: st.metric("Total AUM",          f"${portfolio['total_value']:,.0f}")
-        with c2: st.metric("Number of Holdings", len(portfolio['holdings']))
-        with c3: st.metric("ESG Rating",         portfolio['esg_rating'])
-        with c4: st.metric("Carbon Intensity",   f"{portfolio['carbon_intensity']:.1f}")
+        with c1: st.metric("Total Positions",   len(portfolio['holdings']))
+        with c2: st.metric("Total Market Value", f"${total_mv:,.0f}")
+        with c3: st.metric("Largest Position",   top_pos)
+        with c4: st.metric("Sectors Covered",    sectors)
 
         divider()
-        section_header("Position Details — All Holdings")
-        hdf   = pd.DataFrame(portfolio['holdings'])
-        hdf['weight'] = hdf['value'] / hdf['value'].sum()
-        gain  = ((hdf['current_price'].fillna(hdf['purchase_price']) - hdf['purchase_price'])
-                 / hdf['purchase_price'] * 100).round(2)
+        col_t, col_c = st.columns([3, 2])
+        with col_t:
+            section_header("Position Snapshot — All Holdings")
+            hdf   = pd.DataFrame(portfolio['holdings'])
+            hdf['weight'] = hdf['value'] / hdf['value'].sum()
+            hdf['sector'] = hdf['ticker'].map(sec_map)
 
-        table_rows = ""
-        for i, row in hdf.iterrows():
-            g = gain[i]; gc = "#10b981" if g >= 0 else "#ef4444"; gs = "+" if g >= 0 else ""
-            table_rows += f"""<tr>
-                <td><strong style="color:#f0f6ff;">{row['ticker']}</strong></td>
-                <td>{row['quantity']:.2f}</td>
-                <td>${row['purchase_price']:.2f}</td>
-                <td>${(row['current_price'] or row['purchase_price']):.2f}</td>
-                <td><strong>${row['value']:,.2f}</strong></td>
-                <td style="color:{gc};font-weight:700;">{gs}{g:.2f}%</td>
-                <td><strong style="color:#c9a84c;">{row['weight']*100:.1f}%</strong></td>
-            </tr>"""
-        st.markdown(f"""<div class="table-wrap"><table class="styled-table">
-            <thead><tr><th>Ticker</th><th>Shares</th><th>Avg Cost</th>
-            <th>Current Price</th><th>Market Value</th><th>Return</th><th>Weight</th></tr></thead>
-            <tbody>{table_rows}</tbody></table></div>""", unsafe_allow_html=True)
+            table_rows = ""
+            for _, row in hdf.sort_values('value', ascending=False).iterrows():
+                table_rows += f"""<tr>
+                    <td><strong style="color:#0f172a;">{row['ticker']}</strong></td>
+                    <td style="color:#64748b;">{row['sector']}</td>
+                    <td>{row['quantity']:.2f}</td>
+                    <td>${row['purchase_price']:.2f}</td>
+                    <td>${(row['current_price'] or row['purchase_price']):.2f}</td>
+                    <td><strong>${row['value']:,.0f}</strong></td>
+                    <td><strong style="color:#2563eb;">{row['weight']*100:.1f}%</strong></td>
+                </tr>"""
+            st.markdown(f"""<div class="table-wrap"><table class="styled-table">
+                <thead><tr><th>Ticker</th><th>Sector</th><th>Shares</th><th>Avg Cost</th>
+                <th>Current Price</th><th>Market Value</th><th>Weight</th></tr></thead>
+                <tbody>{table_rows}</tbody></table></div>""", unsafe_allow_html=True)
 
-        divider()
-        section_header("Portfolio Weight Distribution")
-        hdf_s = hdf.sort_values('weight', ascending=True)
-        fig = go.Figure(go.Bar(
-            x=hdf_s['weight']*100, y=hdf_s['ticker'], orientation='h',
-            marker=dict(color=hdf_s['weight']*100,
-                        colorscale=[[0,'#1a3358'],[0.5,'#2563eb'],[1,'#c9a84c']],
-                        line=dict(color='rgba(0,0,0,0)')),
-            text=[f"{w*100:.1f}%" for w in hdf_s['weight']],
-            textposition='outside', textfont=dict(color='#8ba4c0', size=11)
-        ))
-        fig.update_layout(**PLOTLY_THEME, height=430,
-                          xaxis_title="Portfolio Weight (%)",
-                          margin=dict(t=10, b=10, l=10, r=60))
-        chart_wrap(fig, height=430)
+        with col_c:
+            section_header("Sector Allocation")
+            hdf2 = pd.DataFrame(portfolio['holdings'])
+            hdf2['sector'] = hdf2['ticker'].map(sec_map)
+            sec_df = hdf2.groupby('sector')['value'].sum().reset_index()
+            sec_df['weight'] = sec_df['value'] / sec_df['value'].sum() * 100
+            sec_df = sec_df.sort_values('weight', ascending=False)
+            colors_sec = ['#2563eb','#3b82f6','#60a5fa','#1d4ed8','#7c3aed',
+                          '#10b981','#0d9488','#f59e0b','#ef4444','#6366f1']
+            fig = go.Figure(go.Pie(
+                labels=sec_df['sector'], values=sec_df['weight'],
+                marker=dict(colors=colors_sec[:len(sec_df)],
+                            line=dict(color='#ffffff', width=2)),
+                textfont=dict(size=11, color='#ffffff'),
+                textinfo='label+percent', hole=0.38,
+                hovertemplate='<b>%{label}</b><br>%{value:.1f}%<extra></extra>'
+            ))
+            fig.update_layout(**PLOTLY_THEME, height=380, showlegend=False,
+                              margin=dict(t=10,b=10,l=10,r=10))
+            st.markdown('<div class="chart-frame">', unsafe_allow_html=True)
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        top3_w   = hdf.nlargest(3, 'weight')
-        top3_pct = top3_w['weight'].sum() * 100
-        divider()
-        insight_box(
-            "Concentration & Rebalancing Signals",
-            f"Top 3 positions — <strong>{', '.join(top3_w['ticker'].tolist())}</strong> — account for "
-            f"<strong>{top3_pct:.1f}%</strong> of AUM. "
-            f"{'Concentration exceeds 40% — consider trimming to reduce idiosyncratic risk.' if top3_pct > 40 else 'Concentration within healthy bounds across 15 holdings.'} "
-            f"Largest single position: <strong>{hdf['weight'].max()*100:.1f}%</strong> of AUM. "
-            f"{'Exceeds 20% single-position limit — a partial trim could improve risk-return profile.' if hdf['weight'].max() > 0.20 else 'No single position dominates — idiosyncratic drawdown exposure is limited.'} "
-            f"Navigate to Performance Attribution to confirm which positions are earning their weight."
-        )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: RISK & ANALYTICS
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "Risk & Analytics":
-        top_bar("Risk & Analytics")
-        page_hero(
-            "Quantitative Risk Assessment & Performance Analytics",
-            "VaR, Sharpe, Sortino, stress scenarios, and benchmark comparison — institutional-grade downside quantification for active portfolio management.",
-            ["Downside Exposure", "Risk-Adjusted Returns", "Benchmark Analysis", "95% Confidence Interval"]
-        )
+    elif page == "Risk Analysis":
+        top_bar("Risk Analysis")
         portfolio = load_portfolio_data()
         risk      = load_risk_metrics()
         if not risk: st.warning("No risk data found."); st.stop()
@@ -579,13 +606,13 @@ else:
         var_m = risk['var_95_monthly'] * portfolio['total_value']
 
         c1,c2,c3,c4 = st.columns(4)
-        for col,(lbl,val,sub,b1,b2,border) in zip([c1,c2,c3,c4],[
-            ("Daily VaR (95%)",  f"${var_d:,.0f}",             "Max 1-day loss @ 95% CI", "#0a1f3d","#0f2e5a","#2563eb"),
-            ("Monthly VaR",      f"${var_m:,.0f}",             "Max 1-month loss",         "#1a0a2e","#2d1154","#7c3aed"),
-            ("Sharpe Ratio",     f"{risk['sharpe_ratio']:.2f}", "Risk-adjusted return",     "#0a2018","#0f3526","#059669"),
-            ("Sortino Ratio",    f"{risk['sortino_ratio']:.2f}","Downside deviation ratio", "#0a1a2e","#102540","#0284c7"),
+        for col,(lbl,val,sub,accent) in zip([c1,c2,c3,c4],[
+            ("Daily VaR (95%)",  f"${var_d:,.0f}",              "Max 1-day loss @ 95% CI",  "#ef4444"),
+            ("Monthly VaR",      f"${var_m:,.0f}",              "Max 1-month loss",          "#f59e0b"),
+            ("Sharpe Ratio",     f"{risk['sharpe_ratio']:.2f}",  "Risk-adjusted return",      "#10b981"),
+            ("Sortino Ratio",    f"{risk['sortino_ratio']:.2f}", "Downside deviation ratio",  "#2563eb"),
         ]):
-            with col: metric_card(lbl, val, sub, b1, b2, border)
+            with col: metric_card(lbl, val, sub, accent)
 
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
@@ -612,21 +639,18 @@ else:
             chart_wrap(fig, height=340)
 
         with col2:
-            # FIX #1: Clarified S&P 500 benchmark label to "S&P 500 (Hist. Avg)"
-            section_header("Portfolio vs S&P 500 Benchmark")
-            fig = go.Figure()
-            fig.add_trace(go.Bar(name='Your Portfolio',
-                                 x=['Sharpe','Sortino','Max Drawdown %','Volatility %'],
-                                 y=[risk['sharpe_ratio'],risk['sortino_ratio'],risk['max_drawdown']*100,risk['volatility']*100],
-                                 marker_color='#2563eb', marker_line=dict(color='rgba(0,0,0,0)')))
-            fig.add_trace(go.Bar(name='S&P 500 (Hist. Avg)',
-                                 x=['Sharpe','Sortino','Max Drawdown %','Volatility %'],
-                                 y=[1.0, 1.5, 20.0, 15.0],
-                                 marker_color='#1a3358', marker_line=dict(color='rgba(0,0,0,0)')))
-            fig.update_layout(**PLOTLY_THEME, barmode='group', height=340,
-                              bargap=0.25, bargroupgap=0.06,
-                              legend=dict(bgcolor='rgba(0,0,0,0)', bordercolor='#1a3358',
-                                          font=dict(size=11, color='#8ba4c0')),
+            section_header("Risk Metrics Overview")
+            fig = go.Figure(go.Bar(
+                x=['Sharpe', 'Sortino', 'Max Drawdown %', 'Volatility %'],
+                y=[risk['sharpe_ratio'], risk['sortino_ratio'],
+                   risk['max_drawdown']*100, risk['volatility']*100],
+                marker=dict(color=['#2563eb','#0284c7','#ef4444','#f59e0b'],
+                            line=dict(color='rgba(0,0,0,0)')),
+                text=[f"{risk['sharpe_ratio']:.2f}", f"{risk['sortino_ratio']:.2f}",
+                      f"{risk['max_drawdown']*100:.1f}%", f"{risk['volatility']*100:.1f}%"],
+                textposition='outside', textfont=dict(color='#475569', size=11)
+            ))
+            fig.update_layout(**PLOTLY_THEME, height=340,
                               margin=dict(t=15, b=10, l=10, r=10))
             chart_wrap(fig, height=340)
 
@@ -634,7 +658,7 @@ else:
         col1, col2 = st.columns(2)
         with col1:
             section_header("Risk Metrics Detail")
-            rows_html = "".join(f"<tr><td>{l}</td><td style='color:#f0f6ff;font-weight:600;text-align:right'>{v}</td></tr>"
+            rows_html = "".join(f"<tr><td>{l}</td><td style='color:#0f172a;font-weight:600;text-align:right'>{v}</td></tr>"
                 for l,v in [("Daily VaR (95%)", f"${var_d:,.2f}"),
                              ("Monthly VaR (95%)", f"${var_m:,.2f}"),
                              ("Annualized Volatility", f"{risk['volatility']*100:.2f}%"),
@@ -646,7 +670,7 @@ else:
             rp    = var_d / portfolio['total_value']
             badge = "risk-low" if rp < 0.02 else ("risk-medium" if rp < 0.05 else "risk-high")
             label = "LOW RISK"  if rp < 0.02 else ("MEDIUM RISK" if rp < 0.05 else "HIGH RISK")
-            rows_html = "".join(f"<tr><td>{l}</td><td style='color:#f0f6ff;font-weight:600;text-align:right'>{v}</td></tr>"
+            rows_html = "".join(f"<tr><td>{l}</td><td style='color:#0f172a;font-weight:600;text-align:right'>{v}</td></tr>"
                 for l,v in [("Sharpe Ratio", f"{risk['sharpe_ratio']:.3f}"),
                              ("Sortino Ratio", f"{risk['sortino_ratio']:.3f}")])
             st.markdown(f'<div class="table-wrap"><table class="styled-table"><tbody>{rows_html}</tbody></table></div>',
@@ -654,21 +678,7 @@ else:
             st.markdown(f"<br><span class='risk-badge {badge}'>{label}</span>", unsafe_allow_html=True)
 
         divider()
-        insight_box(
-            "Risk Profile Interpretation",
-            f"Sharpe ratio of <strong>{risk['sharpe_ratio']:.2f}</strong> vs S&P 500 benchmark of ~1.0 — "
-            f"<strong>{'exceptional' if risk['sharpe_ratio'] > 2.0 else 'above-average'} risk-adjusted returns</strong>. "
-            f"Sortino ratio of <strong>{risk['sortino_ratio']:.2f}</strong> confirms gains are not driven by excessive downside volatility. "
-            f"Max drawdown of <strong>{risk['max_drawdown']*100:.1f}%</strong> "
-            f"{'is well-contained — strong drawdown resilience.' if risk['max_drawdown'] < 0.15 else 'warrants monitoring — review stop-loss levels on largest drawdown contributors.'} "
-            f"Annual volatility <strong>{risk['volatility']*100:.1f}%</strong> is "
-            f"{'below' if risk['volatility'] < 0.15 else 'above'} S&P 500 historical average of ~15%."
-        )
-
-        divider()
         section_header("Stress Test — Historical Crash Scenarios")
-        st.markdown('<span class="info-pill">Estimated portfolio impact based on historical S&P 500 peak-to-trough drawdowns</span>',
-                    unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
         scenarios = [
@@ -688,83 +698,39 @@ else:
             survival = portfolio['total_value'] + loss
             with col:
                 st.markdown(f"""
-                <div style="background:#0d1e35;border:1px solid {s['color']}33;
-                     border-top:3px solid {s['color']};border-radius:10px;padding:1.2rem 1.3rem;">
+                <div style="background:#ffffff;border:1px solid {s['color']}33;
+                     border-top:3px solid {s['color']};border-radius:10px;padding:1.2rem 1.3rem;
+                     box-shadow:0 1px 3px rgba(0,0,0,0.06);">
                     <div style="font-size:0.72rem;font-weight:700;color:{s['color']};
                          text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.3rem;">{s['name']}</div>
-                    <div style="font-size:0.68rem;color:#445771;margin-bottom:0.65rem;">{s['period']}</div>
+                    <div style="font-size:0.68rem;color:#64748b;margin-bottom:0.65rem;">{s['period']}</div>
                     <div style="font-size:1.6rem;font-weight:800;color:{s['color']};letter-spacing:-0.03em;">
                         {s['market_drop']:.1f}%</div>
-                    <div style="font-size:0.7rem;color:#8ba4c0;margin:0.15rem 0 0.7rem;">S&P 500 peak-to-trough</div>
-                    <div style="border-top:1px solid #1a3358;padding-top:0.7rem;">
-                        <div style="font-size:0.68rem;color:#445771;">Estimated portfolio loss</div>
+                    <div style="font-size:0.7rem;color:#94a3b8;margin:0.15rem 0 0.7rem;">S&P 500 peak-to-trough</div>
+                    <div style="border-top:1px solid #e2e8f0;padding-top:0.7rem;">
+                        <div style="font-size:0.68rem;color:#64748b;">Estimated portfolio loss</div>
                         <div style="font-size:1.1rem;font-weight:700;color:#ef4444;">${loss:,.0f}</div>
-                        <div style="font-size:0.68rem;color:#445771;margin-top:0.35rem;">Surviving portfolio value</div>
+                        <div style="font-size:0.68rem;color:#64748b;margin-top:0.35rem;">Surviving portfolio value</div>
                         <div style="font-size:1.1rem;font-weight:700;color:#10b981;">${survival:,.0f}</div>
                     </div>
-                    <div style="margin-top:0.7rem;font-size:0.71rem;color:#445771;line-height:1.55;">
+                    <div style="margin-top:0.7rem;font-size:0.71rem;color:#64748b;line-height:1.55;">
                         {s['description']}</div>
                 </div>""", unsafe_allow_html=True)
 
-        divider()
-        section_header("VaR Methodology Comparison")
-        st.markdown("""
-        <div class="table-wrap"><table class="styled-table">
-            <thead><tr><th>Method</th><th>How It Works</th><th>Strength</th><th>Limitation</th><th>Status</th></tr></thead>
-            <tbody>
-                <tr>
-                    <td><strong style="color:#c9a84c;">Parametric VaR</strong></td>
-                    <td>Assumes normal return distribution. Uses portfolio μ and σ directly.</td>
-                    <td>Fast, analytical, fully transparent</td>
-                    <td>Underestimates fat-tail events</td>
-                    <td><span class="sig-badge signal-buy">Active</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#8ba4c0;">Historical Simulation</strong></td>
-                    <td>Replays actual past returns. No distribution assumption needed.</td>
-                    <td>Captures real tail events naturally</td>
-                    <td>Dependent on historical window length</td>
-                    <td><span class="sig-badge signal-hold">Planned</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#8ba4c0;">Monte Carlo</strong></td>
-                    <td>Simulates 10,000+ random scenarios from a fitted distribution.</td>
-                    <td>Most flexible, handles any portfolio structure</td>
-                    <td>Computationally expensive at scale</td>
-                    <td><span class="sig-badge signal-hold">Planned</span></td>
-                </tr>
-            </tbody>
-        </table></div>""", unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        insight_box(
-            "Methodology & Known Limitations",
-            "Current VaR uses <strong>Parametric (Variance-Covariance) methodology</strong> — the standard baseline "
-            "used by most investment banks for daily risk reporting. Known limitation: normality assumption. "
-            "Financial returns exhibit <strong>leptokurtosis</strong> (fat tails) — extreme losses occur more "
-            "frequently than the model predicts. The Sharpe of <strong>2.56 reflects simulated entry prices "
-            "during a sustained bull market</strong> — in a live deployment with real cost basis across full "
-            "market cycles this normalises to the 1.2–1.8 range typical of well-managed active portfolios. "
-            "Roadmap: Historical Simulation VaR and Monte Carlo with Student's t-distribution."
-        )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: ESG INTELLIGENCE
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "ESG Intelligence":
-        top_bar("ESG Intelligence")
-        page_hero(
-            "Environmental, Social & Governance Analysis",
-            "Three-pillar ESG scoring across all 15 holdings — carbon intensity, labor practice proxies, and governance indicators with company-level breakdown.",
-            ["Sustainability Scoring", "3-Pillar Framework", "Carbon Intensity", "Company-Level Breakdown"]
-        )
+    elif page == "ESG Scores":
+        top_bar("ESG Scores")
         portfolio = load_portfolio_data()
         if not portfolio: st.warning("No data."); st.stop()
 
         c1,c2,c3,c4 = st.columns(4)
-        with c1: st.metric("Overall ESG Rating", portfolio['esg_rating'])
-        with c2: st.metric("ESG Score",          f"{portfolio['esg_score']:.1f} / 100")
-        with c3: st.metric("Environmental",      f"{portfolio['environmental_score']:.1f}")
-        with c4: st.metric("Carbon Intensity",   f"{portfolio['carbon_intensity']:.1f}")
+        with c1: st.metric("Environmental Score", f"{portfolio['environmental_score']:.1f} / 100")
+        with c2: st.metric("Social Score",         f"{portfolio['social_score']:.1f} / 100")
+        with c3: st.metric("Governance Score",     f"{portfolio['governance_score']:.1f} / 100")
+        with c4: st.metric("Carbon Intensity",     f"{portfolio['carbon_intensity']:.1f}")
 
         divider()
         section_header("ESG Pillar Gauges — Environmental · Social · Governance")
@@ -777,15 +743,15 @@ else:
             with col:
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number", value=score,
-                    title={'text': lbl, 'font': {'color': '#8ba4c0', 'size': 13, 'family': 'Inter'}},
-                    number={'font': {'color': '#f0f6ff', 'family': 'Inter', 'size': 30}},
-                    gauge={'axis': {'range': [0,100], 'tickcolor':'#1a3358',
-                                    'tickfont': {'color':'#445771','size':9}},
+                    title={'text': lbl, 'font': {'color': '#475569', 'size': 13, 'family': 'Inter'}},
+                    number={'font': {'color': '#0f172a', 'family': 'Inter', 'size': 30}},
+                    gauge={'axis': {'range': [0,100], 'tickcolor':'#e2e8f0',
+                                    'tickfont': {'color':'#94a3b8','size':9}},
                            'bar': {'color': color, 'thickness': 0.22},
                            'bgcolor': 'rgba(0,0,0,0)', 'borderwidth': 0,
-                           'steps': [{'range':[0,50],'color':'#0d1e35'},
-                                     {'range':[50,75],'color':'#0f2340'},
-                                     {'range':[75,100],'color':'#102848'}],
+                           'steps': [{'range':[0,50],'color':'#f8fafc'},
+                                     {'range':[50,75],'color':'#f1f5f9'},
+                                     {'range':[75,100],'color':'#eff6ff'}],
                            'threshold': {'line':{'color':color,'width':2},'thickness':0.8,'value':score}}
                 ))
                 fig.update_layout(**PLOTLY_THEME, height=240, margin=dict(t=30,b=10,l=20,r=20))
@@ -799,8 +765,7 @@ else:
         if companies:
             edf = pd.DataFrame([{
                 'Ticker': c.ticker,
-                # FIX #2: Nudge MSFT environmental score to be more defensible
-                'Environmental': max(c.environmental_score or 0, 55) if c.ticker == 'MSFT' else (c.environmental_score or 0),
+                'Environmental': c.environmental_score or 0,
                 'Social': c.social_score or 0,
                 'Governance': c.governance_score or 0,
                 'Overall': c.esg_score or 0,
@@ -813,8 +778,8 @@ else:
                                      marker_color=color, marker_line=dict(color='rgba(0,0,0,0)')))
             fig.update_layout(**PLOTLY_THEME, barmode='group', height=380,
                               bargap=0.2, bargroupgap=0.05, yaxis_title="ESG Score (0–100)",
-                              legend=dict(bgcolor='rgba(0,0,0,0)', bordercolor='#1a3358',
-                                          font=dict(size=11, color='#8ba4c0')),
+                              legend=dict(bgcolor='rgba(0,0,0,0)', bordercolor='#e2e8f0',
+                                          font=dict(size=11, color='#475569')),
                               margin=dict(t=15, b=10, l=10, r=10))
             chart_wrap(fig, height=380)
 
@@ -822,70 +787,12 @@ else:
             section_header("Company ESG Detail Table")
             st.dataframe(edf, use_container_width=True, hide_index=True)
 
-            best_e  = edf.nlargest(1,'Environmental').iloc[0]
-            worst_e = edf.nsmallest(1,'Environmental').iloc[0]
-            best_g  = edf.nlargest(1,'Governance').iloc[0]
-            divider()
-            insight_box(
-                "ESG Sustainability Assessment",
-                f"<strong>{best_e['Ticker']}</strong> leads on Environmental stewardship ({best_e['Environmental']:.0f}/100) — "
-                f"strong emissions controls and energy transition positioning increasingly rewarded by institutional capital. "
-                f"<strong>{worst_e['Ticker']}</strong> trails on Environmental ({worst_e['Environmental']:.0f}/100) — "
-                f"consider whether return premium adequately compensates for climate-related regulatory risk. "
-                f"<strong>{best_g['Ticker']}</strong> ranks highest on Governance ({best_g['Governance']:.0f}/100) — "
-                f"strong board accountability linked to lower fraud and restatement risk. "
-                f"Carbon intensity of <strong>{portfolio['carbon_intensity']:.1f}</strong>: "
-                f"{'elevated — reducing high-emission holdings could align portfolio with net-zero frameworks.' if portfolio['carbon_intensity'] > 80 else 'acceptable — consistent with responsible allocation strategy.'}"
-            )
-
-            divider()
-            section_header("ESG Scoring Methodology")
-            st.markdown("""
-            <div class="table-wrap"><table class="styled-table">
-                <thead><tr><th>Pillar</th><th>Weight</th><th>Key Inputs</th><th>Production Data Source</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td><strong style="color:#10b981;">Environmental (E)</strong></td>
-                        <td>33%</td>
-                        <td>Carbon intensity, energy use proxy, sector emissions profile</td>
-                        <td>MSCI ESG Ratings, Refinitiv</td>
-                    </tr>
-                    <tr>
-                        <td><strong style="color:#3b82f6;">Social (S)</strong></td>
-                        <td>33%</td>
-                        <td>Labor practice proxies, industry workforce standards</td>
-                        <td>Sustainalytics, Bloomberg ESG</td>
-                    </tr>
-                    <tr>
-                        <td><strong style="color:#8b5cf6;">Governance (G)</strong></td>
-                        <td>34%</td>
-                        <td>Board structure indicators, executive pay alignment proxies</td>
-                        <td>ISS Governance, FactSet</td>
-                    </tr>
-                </tbody>
-            </table></div>""", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("""
-            <div class="insight-box" style="border-left-color:#445771;">
-                <div class="insight-box-title" style="color:#8ba4c0;">⚠️ Data Disclaimer</div>
-                <div class="insight-box-text">
-                    ESG scores are calculated using a <strong>proprietary rule-based algorithm</strong> inspired by
-                    the MSCI three-pillar framework. Scores are <strong>synthetic and for demonstration purposes only</strong>
-                    — they do not represent actual MSCI, Sustainalytics, or Refinitiv ratings.
-                    In a production deployment, scores would be replaced with licensed data from an accredited ESG data provider.
-                </div>
-            </div>""", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: INVESTMENT SIGNALS
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "Investment Signals":
-        top_bar("Investment Signals")
-        page_hero(
-            "Quantitative BUY / HOLD / SELL Signal Engine",
-            "Composite scoring model — ESG quality (40%), price momentum (40%), position stability (20%) — ranking all 15 holdings by conviction.",
-            ["Proprietary Signals", "ESG-Momentum Model", "Composite Scoring", "Conviction Ranking"]
-        )
+    elif page == "Trade Signals":
+        top_bar("Trade Signals")
         portfolio = load_portfolio_data()
         if not portfolio: st.warning("No data."); st.stop()
         companies = load_company_esg()
@@ -897,33 +804,31 @@ else:
         avg_esg = sig_df['ESG Score'].mean()
 
         c1,c2,c3,c4 = st.columns(4)
-        with c1: kpi_card("BUY Signals",   str(buy_c),       "Strong conviction", "pos", "🟢")
-        with c2: kpi_card("HOLD Signals",  str(hold_c),      "Maintain position", "neu", "🔵")
-        with c3: kpi_card("SELL Signals",  str(sell_c),      "Review required",   "neg", "🔴")
-        with c4: kpi_card("Avg ESG Score", f"{avg_esg:.1f}", "Portfolio quality", "neu", "🌱")
+        with c1: kpi_card("BUY Signals",   str(buy_c),       "Strong conviction", "pos")
+        with c2: kpi_card("HOLD Signals",  str(hold_c),      "Maintain position", "neu")
+        with c3: kpi_card("SELL Signals",  str(sell_c),      "Review required",   "neg")
+        with c4: kpi_card("Avg ESG Score", f"{avg_esg:.1f}", "Portfolio quality", "neu")
 
         divider()
         section_header("Signal Summary by Holding")
-        st.markdown('<span class="info-pill">Methodology: ESG 40% · Price Momentum 40% · Position Stability 20%</span>',
-                    unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
         hdrs = ["TICKER","SECTOR","ESG SCORE","MOMENTUM","COMPOSITE SCORE","SIGNAL"]
         cols = st.columns([1.5,2,1.2,1.5,1.5,1.2])
         for c,h in zip(cols,hdrs):
-            c.markdown(f'<span style="font-size:0.65rem;font-weight:700;color:#445771;letter-spacing:0.1em;">{h}</span>',
+            c.markdown(f'<span style="font-size:0.65rem;font-weight:700;color:#64748b;letter-spacing:0.1em;">{h}</span>',
                        unsafe_allow_html=True)
-        st.markdown('<hr style="border-color:#1a3358;margin:0.3rem 0 0.5rem;">', unsafe_allow_html=True)
+        st.markdown('<hr style="border-color:#e2e8f0;margin:0.3rem 0 0.5rem;">', unsafe_allow_html=True)
         for _, row in sig_df.iterrows():
             cols = st.columns([1.5,2,1.2,1.5,1.5,1.2])
-            cols[0].markdown(f'<strong style="color:#f0f6ff;">{row["Ticker"]}</strong>', unsafe_allow_html=True)
-            cols[1].markdown(f'<span style="color:#8ba4c0;">{row["Sector"]}</span>', unsafe_allow_html=True)
-            cols[2].markdown(f'<span style="color:#c9d8f0;">{row["ESG Score"]}</span>', unsafe_allow_html=True)
+            cols[0].markdown(f'<strong style="color:#0f172a;">{row["Ticker"]}</strong>', unsafe_allow_html=True)
+            cols[1].markdown(f'<span style="color:#64748b;">{row["Sector"]}</span>', unsafe_allow_html=True)
+            cols[2].markdown(f'<span style="color:#475569;">{row["ESG Score"]}</span>', unsafe_allow_html=True)
             mc = "#10b981" if row['Momentum']>0 else "#ef4444"
             ms = "+" if row['Momentum']>0 else ""
             cols[3].markdown(f'<span style="color:{mc};font-weight:600;">{ms}{row["Momentum"]:.2f}%</span>',
                              unsafe_allow_html=True)
-            cols[4].markdown(f'<strong style="color:#c9d8f0;">{row["Composite"]}</strong>', unsafe_allow_html=True)
+            cols[4].markdown(f'<strong style="color:#475569;">{row["Composite"]}</strong>', unsafe_allow_html=True)
             cols[5].markdown(f'<span class="sig-badge {row["_cls"]}">{row["Signal"]}</span>',
                              unsafe_allow_html=True)
 
@@ -938,24 +843,23 @@ else:
                             colorscale=[[0,'#ef4444'],[0.5,'#f59e0b'],[1,'#10b981']],
                             line=dict(color='rgba(0,0,0,0)')),
                 text=[f"{v}" for v in df_s['Composite']],
-                textposition='outside', textfont=dict(color='#8ba4c0',size=10)
+                textposition='outside', textfont=dict(color='#475569',size=10)
             ))
             fig.update_layout(**PLOTLY_THEME, height=430,
                               xaxis_title="Composite Score",
                               margin=dict(t=15,b=10,l=10,r=50))
             chart_wrap(fig, height=430)
         with col2:
-            # FIX #3: Remove duplicate HOLD label — use labels only, no textinfo overlap
             section_header("Signal Distribution Breakdown")
             sc  = sig_df['Signal'].value_counts().reset_index()
             sc.columns = ['Signal','Count']
             color_map = {'BUY': '#10b981', 'HOLD': '#2563eb', 'SELL': '#ef4444'}
-            colors_pie = [color_map.get(s, '#8ba4c0') for s in sc['Signal']]
+            colors_pie = [color_map.get(s, '#94a3b8') for s in sc['Signal']]
             fig = go.Figure(go.Pie(
                 labels=sc['Signal'], values=sc['Count'],
                 marker=dict(colors=colors_pie,
-                            line=dict(color='#060d1a', width=3)),
-                textfont=dict(size=12, color='#f0f6ff'), hole=0.45,
+                            line=dict(color='#ffffff', width=3)),
+                textfont=dict(size=12, color='#ffffff'), hole=0.45,
                 textinfo='label+percent',
                 hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Share: %{percent}<extra></extra>'
             ))
@@ -963,72 +867,13 @@ else:
                               margin=dict(t=15,b=10,l=10,r=10))
             chart_wrap(fig, height=430)
 
-        top_buy  = sig_df[sig_df['Signal']=='BUY'].head(2)['Ticker'].tolist()
-        top_sell = sig_df[sig_df['Signal']=='SELL'].head(2)['Ticker'].tolist()
-        divider()
-        insight_box(
-            "Signal Conviction & Action Priorities",
-            f"Model flagged <strong>{buy_c} BUY</strong>, <strong>{hold_c} HOLD</strong>, <strong>{sell_c} SELL</strong> across {len(sig_df)} holdings. "
-            + (f"<strong>{', '.join(top_buy)}</strong> — highest-conviction BUYs: ESG quality and momentum aligned. " if top_buy else "")
-            + (f"<strong>{', '.join(top_sell)}</strong> — flagged for review: weak composite scores indicate deteriorating momentum or ESG risk. " if top_sell else "")
-            + "Cross-reference SELL-flagged holdings against Performance Attribution to confirm whether underperformance is cyclical or structural."
-        )
 
-        divider()
-        section_header("Factor Model — Current & Planned")
-        st.markdown("""
-        <div class="table-wrap"><table class="styled-table">
-            <thead><tr><th>Factor</th><th>Category</th><th>Weight</th><th>Rationale</th><th>Status</th></tr></thead>
-            <tbody>
-                <tr>
-                    <td><strong style="color:#f0f6ff;">ESG Quality Score</strong></td>
-                    <td>Sustainability</td><td><strong style="color:#c9a84c;">40%</strong></td>
-                    <td>Lower ESG risk = lower regulatory and reputational tail risk</td>
-                    <td><span class="sig-badge signal-buy">Live</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#f0f6ff;">Price Momentum</strong></td>
-                    <td>Technical</td><td><strong style="color:#c9a84c;">40%</strong></td>
-                    <td>Return vs cost basis — academically validated momentum factor</td>
-                    <td><span class="sig-badge signal-buy">Live</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#f0f6ff;">Position Stability</strong></td>
-                    <td>Portfolio</td><td><strong style="color:#c9a84c;">20%</strong></td>
-                    <td>Equal weight baseline reflecting neutral position sizing</td>
-                    <td><span class="sig-badge signal-buy">Live</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#445771;">P/E vs Sector Median</strong></td>
-                    <td>Valuation</td><td>—</td>
-                    <td>Identifies relative over/undervaluation within same sector</td>
-                    <td><span class="sig-badge signal-hold">Planned</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#445771;">Analyst Consensus</strong></td>
-                    <td>Fundamental</td><td>—</td>
-                    <td>Aggregated sell-side ratings as a sentiment signal</td>
-                    <td><span class="sig-badge signal-hold">Planned</span></td>
-                </tr>
-                <tr>
-                    <td><strong style="color:#445771;">Macro Regime Filter</strong></td>
-                    <td>Macro</td><td>—</td>
-                    <td>Adjusts signal weights based on interest rate / VIX environment</td>
-                    <td><span class="sig-badge signal-hold">Planned</span></td>
-                </tr>
-            </tbody>
-        </table></div>""", unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: PERFORMANCE ATTRIBUTION
     # ══════════════════════════════════════════════════════════════════════════
     elif page == "Performance Attribution":
         top_bar("Performance Attribution")
-        page_hero(
-            "Return Attribution & P&L Analysis",
-            "Decompose aggregate performance into individual holding contributions and sector attribution — identifying alpha generators and return detractors.",
-            ["Holding Attribution", "Sector Decomposition", "Unrealized P&L", "Alpha Identification"]
-        )
         portfolio  = load_portfolio_data()
         if not portfolio: st.warning("No data."); st.stop()
         companies  = load_company_esg()
@@ -1059,12 +904,11 @@ else:
             section_header("Individual Holding Returns")
             hs     = hdf.sort_values('momentum')
             colors = ['#10b981' if m >= 0 else '#ef4444' for m in hs['momentum']]
-            # FIX #4: textposition auto prevents left-edge truncation for negative bars
             fig    = go.Figure(go.Bar(
                 x=hs['momentum'], y=hs['ticker'], orientation='h',
                 marker=dict(color=colors, line=dict(color='rgba(0,0,0,0)')),
                 text=[f"{m:+.2f}%" for m in hs['momentum']],
-                textposition='auto', textfont=dict(color='#f0f6ff',size=10)
+                textposition='outside', textfont=dict(color='#475569',size=10)
             ))
             fig.update_layout(**PLOTLY_THEME, height=450,
                               xaxis_title="Return vs Cost Basis (%)",
@@ -1080,7 +924,7 @@ else:
             fig = px.bar(sec_df, x='sector', y='Contribution', color='Contribution',
                          color_continuous_scale=[[0,'#ef4444'],[0.5,'#f59e0b'],[1,'#10b981']],
                          text='Contribution')
-            fig.update_traces(marker_line_width=0, textfont_color='#8ba4c0')
+            fig.update_traces(marker_line_width=0, textfont_color='#475569')
             fig.update_layout(**PLOTLY_THEME, height=450,
                               xaxis_title="Sector", yaxis_title="Weighted Contribution (%)",
                               margin=dict(t=15,b=10,l=10,r=10))
@@ -1109,34 +953,12 @@ else:
         sec_df.columns   = ['Sector','Portfolio Weight','Avg Return %','Weighted Contribution %']
         st.dataframe(sec_df, use_container_width=True, hide_index=True)
 
-        best_sec  = hdf.groupby('sector')['contribution'].sum().idxmax()
-        worst_sec = hdf.groupby('sector')['contribution'].sum().idxmin()
-        winners   = hdf[hdf['momentum']>0]
-        losers    = hdf[hdf['momentum']<0]
-        divider()
-        insight_box(
-            "Return Drivers & Rebalancing Guidance",
-            f"Weighted portfolio return: <strong>{total_return:.2f}%</strong>. "
-            f"<strong>{best['ticker']}</strong> strongest contributor at <strong>{best['momentum']:+.2f}%</strong> — "
-            f"if overweight vs target, consider partial profit-taking to lock in gains. "
-            f"<strong>{worst['ticker']}</strong> largest detractor at <strong>{worst['momentum']:+.2f}%</strong> — "
-            f"evaluate whether underperformance is sector headwinds (cyclical) or company-specific deterioration (structural). "
-            f"Top sector: <strong>{best_sec}</strong>. Drag sector: <strong>{worst_sec}</strong>. "
-            f"<strong>{len(winners)}</strong> positions in unrealized gain (${winners['pnl'].sum():,.0f}); "
-            f"<strong>{len(losers)}</strong> in unrealized loss (${abs(losers['pnl'].sum()):,.0f}). "
-            f"Cross-reference losing positions with Investment Signals before acting."
-        )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: BACKTEST
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "Backtest":
+    elif page == "Signal Backtest":
         top_bar("Signal Backtest")
-        page_hero(
-            "Signal Performance Backtesting",
-            "Validate the BUY/HOLD/SELL engine against 30/60/90-day historical windows — directional accuracy vs random baseline and forward return analysis.",
-            ["Historical Validation", "Signal Accuracy", "30 / 60 / 90 Day Windows", "Forward Returns"]
-        )
         portfolio = load_portfolio_data()
         if not portfolio: st.warning("No data."); st.stop()
         companies = load_company_esg()
@@ -1188,11 +1010,11 @@ else:
         buy_90 = bt_df[bt_df['Signal']=='BUY']['Fwd 90d %'].mean()
 
         c1,c2,c3,c4 = st.columns(4)
-        with c1: kpi_card("30-Day Accuracy", f"{acc_30:.0f}%", "Directional signals", "pos" if acc_30>50 else "neg", "🎯")
-        with c2: kpi_card("60-Day Accuracy", f"{acc_60:.0f}%", "Directional signals", "pos" if acc_60>50 else "neg", "🎯")
-        with c3: kpi_card("90-Day Accuracy", f"{acc_90:.0f}%", "Directional signals", "pos" if acc_90>50 else "neg", "🎯")
+        with c1: kpi_card("30-Day Accuracy", f"{acc_30:.0f}%", "Directional signals", "pos" if acc_30>50 else "neg")
+        with c2: kpi_card("60-Day Accuracy", f"{acc_60:.0f}%", "Directional signals", "pos" if acc_60>50 else "neg")
+        with c3: kpi_card("90-Day Accuracy", f"{acc_90:.0f}%", "Directional signals", "pos" if acc_90>50 else "neg")
         with c4: kpi_card("Avg BUY Return",  f"{buy_90:+.1f}%" if not np.isnan(buy_90) else "—",
-                          "90d forward return", "pos" if not np.isnan(buy_90) and buy_90>0 else "neg", "📈")
+                          "90d forward return", "pos" if not np.isnan(buy_90) and buy_90>0 else "neg")
 
         divider()
         section_header("Forward Return by Holding & Signal")
@@ -1203,14 +1025,14 @@ else:
             return f'<span style="color:{c};font-weight:600;">{s}{val:.2f}%</span>'
 
         def tick(correct, signal):
-            if signal == 'HOLD': return '<span style="color:#445771;">—</span>'
+            if signal == 'HOLD': return '<span style="color:#94a3b8;">—</span>'
             return '<span style="color:#10b981;font-size:1rem;">✓</span>' if correct else '<span style="color:#ef4444;font-size:1rem;">✗</span>'
 
         table_rows = ""
         for _, row in bt_df.iterrows():
             sc = "signal-buy" if row['Signal']=='BUY' else ("signal-sell" if row['Signal']=='SELL' else "signal-hold")
             table_rows += f"""<tr>
-                <td><strong style="color:#f0f6ff;">{row['Ticker']}</strong></td>
+                <td><strong style="color:#0f172a;">{row['Ticker']}</strong></td>
                 <td><span class="sig-badge {sc}">{row['Signal']}</span></td>
                 <td>{fmt_ret(row['Fwd 30d %'])}</td>
                 <td>{tick(row['Correct 30d'], row['Signal'])}</td>
@@ -1234,7 +1056,6 @@ else:
         col1, col2 = st.columns(2)
         with col1:
             section_header("Signal Accuracy by Time Horizon")
-            # FIX #6: Round tooltip values by formatting text explicitly
             fig = go.Figure(go.Bar(
                 x=['30 Days','60 Days','90 Days'],
                 y=[acc_30, acc_60, acc_90],
@@ -1242,13 +1063,13 @@ else:
                             colorscale=[[0,'#ef4444'],[0.5,'#f59e0b'],[1,'#10b981']],
                             cmin=0, cmax=100, line=dict(color='rgba(0,0,0,0)')),
                 text=[f"{v:.0f}%" for v in [acc_30, acc_60, acc_90]],
-                textposition='outside', textfont=dict(color='#8ba4c0', size=13),
+                textposition='outside', textfont=dict(color='#475569', size=13),
                 customdata=[f"{v:.0f}%" for v in [acc_30, acc_60, acc_90]],
                 hovertemplate='<b>%{x}</b><br>Accuracy: %{customdata}<extra></extra>'
             ))
-            fig.add_hline(y=50, line_dash="dash", line_color="#445771",
+            fig.add_hline(y=50, line_dash="dash", line_color="#94a3b8",
                           annotation_text="  Random baseline (50%)",
-                          annotation_font=dict(color="#445771", size=11))
+                          annotation_font=dict(color="#94a3b8", size=11))
             fig.update_layout(**PLOTLY_THEME, height=340,
                               yaxis_range=[0, 105],
                               yaxis_title="Accuracy (%)",
@@ -1256,7 +1077,6 @@ else:
             chart_wrap(fig, height=340)
 
         with col2:
-            # FIX #5: Note about HOLD avg return added to insight box below
             section_header("Avg 90-Day Forward Return by Signal")
             abs_df = bt_df.groupby('Signal')['Fwd 90d %'].mean().reset_index()
             colors_s = ['#10b981' if s=='BUY' else ('#ef4444' if s=='SELL' else '#3b82f6')
@@ -1265,107 +1085,118 @@ else:
                 x=abs_df['Signal'], y=abs_df['Fwd 90d %'],
                 marker=dict(color=colors_s, line=dict(color='rgba(0,0,0,0)')),
                 text=[f"{v:+.2f}%" for v in abs_df['Fwd 90d %']],
-                textposition='outside', textfont=dict(color='#8ba4c0', size=12)
+                textposition='outside', textfont=dict(color='#475569', size=12)
             ))
-            fig2.add_hline(y=0, line_color="#1a3358", line_width=1)
+            fig2.add_hline(y=0, line_color="#e2e8f0", line_width=1)
             fig2.update_layout(**PLOTLY_THEME, height=340,
                                yaxis_title="Avg Forward Return (%)",
                                margin=dict(t=15,b=10,l=10,r=10))
             chart_wrap(fig2, height=340)
 
-        divider()
-        hold_90 = bt_df[bt_df['Signal']=='HOLD']['Fwd 90d %'].mean()
-        insight_box(
-            "Backtest Interpretation & Limitations",
-            f"Directional signals achieved <strong>{acc_30:.0f}%</strong> accuracy at 30 days, "
-            f"<strong>{acc_60:.0f}%</strong> at 60 days, and <strong>{acc_90:.0f}%</strong> at 90 days — "
-            f"vs a random baseline of 50%. "
-            + (f"BUY-rated holdings returned an average of <strong>{buy_90:+.1f}%</strong> over 90 days, "
-               f"{'confirming the model identifies positive momentum effectively.' if buy_90 > 0 else 'suggesting factor weights warrant recalibration.'} "
-               if not np.isnan(buy_90) else "")
-            + (f"HOLD avg return of <strong>{hold_90:+.1f}%</strong> reflects only {len(bt_df[bt_df['Signal']=='HOLD'])} holdings — small sample size amplifies individual stock outcomes and is not statistically significant. "
-               if not np.isnan(hold_90) else "")
-            + "Note: this is a simplified backward-looking validation using recent price history as a proxy for forward returns. "
-            "A production-grade backtest would use point-in-time data, transaction cost modeling, "
-            "and out-of-sample walk-forward validation to eliminate look-ahead bias."
-        )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: AI ANALYST
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "AI Analyst":
-        top_bar("AI Analyst")
-        page_hero(
-            "AI-Powered Financial Analyst",
-            "Ask any question about your portfolio in plain English — RAG-powered responses grounded in your actual holdings, risk metrics, and ESG data.",
-            ["Conversational Analysis", "Portfolio-Aware", "Knowledge Retrieval", "Scenario Queries"]
-        )
-
-        @st.cache_resource
+    elif page == "AI Assistant":
+        top_bar("AI Assistant")
+        @st.cache_resource(show_spinner=False)
         def load_chatbot():
-            from src.chatbot.rag_assistant import RAGFinancialAssistant
-            return RAGFinancialAssistant()
+            from src.chatbot.langchain_assistant import LangChainRAGAssistant
+            return LangChainRAGAssistant()
 
         try:
-            assistant = load_chatbot()
-            st.markdown('<span class="info-pill">🤖 AI Analyst Online</span>', unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
+            with st.spinner("Initialising AI Analyst — loading models and knowledge base..."):
+                assistant = load_chatbot()
 
             if 'chat_history' not in st.session_state:
                 st.session_state.chat_history = []
+            if 'pending_q' not in st.session_state:
+                st.session_state.pending_q = None
 
+            # ── Status + Clear Memory ─────────────────────────────────────
+            col_pill, col_clear = st.columns([5, 1])
+            with col_pill:
+                turns = st.session_state.chat_history[-1].get('turns', 0) if st.session_state.chat_history else 0
+                st.markdown(
+                    f'<span class="info-pill">AI Analyst Online — LangChain RAG · {turns} turn{"s" if turns != 1 else ""} in memory</span>',
+                    unsafe_allow_html=True)
+            with col_clear:
+                if st.button("Clear Memory", use_container_width=True):
+                    assistant.clear_memory()
+                    st.session_state.chat_history = []
+                    st.session_state.pending_q = None
+                    st.rerun()
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # ── Quick shortcuts ───────────────────────────────────────────
             section_header("Quick Query Shortcuts")
-            c1,c2,c3,c4 = st.columns(4)
-            quick = {c1:("Portfolio risk","What's my portfolio risk?"),
-                     c2:("ESG analysis","Explain my ESG score"),
-                     c3:("Sharpe ratio","What's my Sharpe ratio?"),
-                     c4:("Holdings","What stocks do I own?")}
-            for col,(label,query) in quick.items():
+            c1, c2, c3, c4 = st.columns(4)
+            shortcuts = {
+                c1: ("Portfolio risk",  "What's my portfolio risk?"),
+                c2: ("ESG analysis",    "Explain my ESG score"),
+                c3: ("Sharpe ratio",    "What's my Sharpe ratio?"),
+                c4: ("Holdings",        "What stocks do I own?"),
+            }
+            for col, (label, query) in shortcuts.items():
                 with col:
                     if st.button(label, use_container_width=True):
-                        st.session_state.q = query
+                        st.session_state.pending_q = query
+                        st.rerun()
 
             divider()
-            user_q = st.text_input("Ask the AI Analyst:",
-                                   value=st.session_state.get('q',''),
-                                   placeholder="e.g. Which holding has the best risk-adjusted return? What is my VaR exposure?")
-            if st.button("Submit Query", type="primary") and user_q:
+
+            def render_bubble(question, answer, sources):
+                import html as _html
+                src = ", ".join(sources) if sources else "—"
+                st.markdown(
+                    f'<div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">'
+                    f'<div style="background:#2563eb;color:#ffffff;padding:0.65rem 1rem;'
+                    f'border-radius:18px 18px 4px 18px;max-width:78%;font-size:0.92rem;line-height:1.5;">'
+                    f'{_html.escape(question)}</div></div>'
+                    f'<div style="display:flex;justify-content:flex-start;margin-bottom:1.1rem;">'
+                    f'<div style="background:#f1f5f9;border:1px solid #e2e8f0;color:#1e293b;'
+                    f'padding:0.75rem 1rem;border-radius:18px 18px 18px 4px;max-width:85%;'
+                    f'font-size:0.92rem;line-height:1.65;">'
+                    f'{_html.escape(answer)}'
+                    f'<div style="font-size:0.65rem;color:#94a3b8;margin-top:0.5rem;">Sources: {src}</div>'
+                    f'</div></div>',
+                    unsafe_allow_html=True)
+
+            # ── Chat history ──────────────────────────────────────────────
+            for chat in st.session_state.chat_history:
+                render_bubble(chat["q"], chat["a"], chat.get("sources", []))
+
+            # ── Process pending shortcut ──────────────────────────────────
+            if st.session_state.pending_q:
+                query = st.session_state.pending_q
+                st.session_state.pending_q = None
+                with st.spinner("Analysing your portfolio..."):
+                    resp = assistant.query(query)
+                render_bubble(query, resp["answer"], resp.get("sources", []))
+                st.session_state.chat_history.append({
+                    "q": query, "a": resp["answer"],
+                    "turns": resp["memory_turns"], "sources": resp["sources"],
+                })
+
+            # ── Chat input (auto-clears, anchors to bottom) ───────────────
+            if user_q := st.chat_input("Ask about your portfolio..."):
                 with st.spinner("Analysing your portfolio..."):
                     resp = assistant.query(user_q)
-                    st.session_state.chat_history.append({
-                        'q': user_q,
-                        'a': resp['answer'],
-                    })
-                    if 'q' in st.session_state: del st.session_state.q
+                render_bubble(user_q, resp["answer"], resp.get("sources", []))
+                st.session_state.chat_history.append({
+                    "q": user_q, "a": resp["answer"],
+                    "turns": resp["memory_turns"], "sources": resp["sources"],
+                })
 
-            if st.session_state.chat_history:
-                divider()
-                section_header("Conversation History")
-                for chat in reversed(st.session_state.chat_history[-4:]):
-                    # FIX #7 & #8: Removed "knowledge docs retrieved" line; response displayed as-is (no single quote wrapping)
-                    st.markdown(
-                        f'<div style="background:#0d1e35;border:1px solid #1a3358;border-radius:10px;'
-                        f'padding:1rem 1.2rem;margin-bottom:0.75rem;">'
-                        f'<div style="font-size:0.68rem;color:#c9a84c;font-weight:700;text-transform:uppercase;'
-                        f'letter-spacing:0.1em;margin-bottom:0.4rem;">Your Question</div>'
-                        f'<div style="color:#f0f6ff;font-weight:500;margin-bottom:0.85rem;">{chat["q"]}</div>'
-                        f'<div style="font-size:0.68rem;color:#2563eb;font-weight:700;text-transform:uppercase;'
-                        f'letter-spacing:0.1em;margin-bottom:0.4rem;">AI Analyst Response</div>'
-                        f'<div style="color:#c9d8f0;line-height:1.65;">{chat["a"]}</div>'
-                        f'</div>', unsafe_allow_html=True)
         except Exception as e:
             st.error(f"AI system unavailable: {e}")
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: MARKET DATA
     # ══════════════════════════════════════════════════════════════════════════
-    elif page == "Market Data":
-        top_bar("Market Data")
-        page_hero(
-            "Live Market Data & Price History",
-            "OHLCV candlestick charts, trading volume, and fundamental metrics for all 15 portfolio instruments — updated in real time via yFinance.",
-            ["Live Price Feed", "Candlestick Charts", "Volume Patterns", "Fundamental Valuation"]
-        )
+    elif page == "Price History":
+        top_bar("Price History")
         collector = components['collector']
         c1, c2    = st.columns([3,1])
         with c1: ticker = st.selectbox("Select Instrument",
@@ -1380,8 +1211,8 @@ else:
                 if info:
                     st.markdown(f"""
                     <div style="margin:0.5rem 0;">
-                        <span style="font-size:1.1rem;font-weight:800;color:#f0f6ff;">{info['company_name']}</span>
-                        <span style="font-size:0.82rem;color:#c9a84c;margin-left:0.5rem;font-weight:600;">({ticker})</span>
+                        <span style="font-size:1.1rem;font-weight:800;color:#0f172a;">{info['company_name']}</span>
+                        <span style="font-size:0.82rem;color:#475569;margin-left:0.5rem;font-weight:600;">({ticker})</span>
                     </div>
                     <span class="info-pill">{info['sector']} · {info['industry']}</span>
                     """, unsafe_allow_html=True)
@@ -1430,42 +1261,16 @@ else:
                                    margin=dict(t=10,b=10,l=10,r=10))
                 chart_wrap(fig2, height=200)
 
-                price_range = data['Close'].max() - data['Close'].min()
-                trend       = "uptrend" if data['Close'].iloc[-1] > data['Close'].iloc[0] else "downtrend"
-                divider()
-                insight_box(
-                    f"{ticker} Technical & Fundamental Context",
-                    f"Over the selected <strong>{period}</strong> window, {ticker} is in a <strong>{trend}</strong> "
-                    f"with a trading range of <strong>${data['Close'].min():.2f} – ${data['Close'].max():.2f}</strong> "
-                    f"(spread: ${price_range:.2f}). "
-                    f"Latest close <strong>${latest:.2f}</strong> — <strong>{change:+.2f}%</strong> session move. "
-                    f"Avg daily volume <strong>{vol_avg:,.0f} shares</strong> — "
-                    f"significant deviations can signal institutional accumulation or distribution. "
-                    + (f"P/E of <strong>{info['pe_ratio']:.1f}x</strong> "
-                       f"{'— market pricing in strong future earnings growth.' if info['pe_ratio'] > 25 else '— modest valuation expectations.'} "
-                       if info and info.get('pe_ratio') else "")
-                    + (f"Beta <strong>{info['beta']:.2f}</strong> — stock amplifies market moves by {info['beta']:.2f}x."
-                       if info and info.get('beta') else "")
-                )
 
     # ══════════════════════════════════════════════════════════════════════════
     # PAGE: BI DASHBOARD
     # ══════════════════════════════════════════════════════════════════════════
     elif page == "BI Dashboard":
         top_bar("BI Dashboard")
-        page_hero(
-            "Interactive Business Intelligence Dashboard",
-            "Published Tableau dashboard — portfolio performance, sector ESG allocation, price trends, and risk KPIs. All filters and drill-downs are live.",
-            ["Executive Reporting", "Interactive Filters", "Drill-Down Analytics", "Stakeholder Ready"]
-        )
-        # FIX #9: Removed duplicate KPI metrics (already shown on Overview) and generic "About" box
-        # Added Tableau full-width embed with open-in-new-tab link
-        st.markdown('<span class="info-pill">Interactive dashboard — all filters and drill-downs are live</span>',
-                    unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
         stc.html("""
-        <div style="width:100%;overflow:hidden;border-radius:10px;border:1px solid #1a3358;">
+        <div style="width:100%;overflow:hidden;border-radius:10px;border:1px solid #e2e8f0;">
             <iframe
                 src="https://public.tableau.com/views/Book4_17718673615800/Dashboard2?:embed=y&:display_count=yes&:showVizHome=no&:toolbar=yes"
                 width="100%" height="900px" frameborder="0" scrolling="yes"

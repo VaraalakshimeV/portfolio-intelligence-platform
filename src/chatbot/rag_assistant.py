@@ -8,11 +8,11 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+import numpy as np
 from pinecone import Pinecone
 from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
 from dotenv import load_dotenv
-import os
 from src.database.database import SessionLocal
 from src.database.models import Portfolio, RiskMetrics, Holding, CompanyInfo
 
@@ -36,39 +36,61 @@ class RAGFinancialAssistant:
         pc = Pinecone(api_key=st.secrets.get('PINECONE_API_KEY', os.getenv('PINECONE_API_KEY', '')))
         self.index = pc.Index('fintech-rag')
         
-        # Embedding model
-        self.embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        # Embedding model — upgraded to 768-dim for better semantic recall
+        self.embedder = SentenceTransformer('all-mpnet-base-v2')
         
         # Gemini LLM
         self.llm = genai.GenerativeModel('gemini-2.5-flash')
         
         print("✓ RAG Assistant ready!")
     
+    RETRIEVAL_MIN_SCORE = 0.30
+
+    CATEGORY_KEYWORDS = {
+        'risk_metrics': ['var', 'sharpe', 'volatility', 'drawdown', 'risk',
+                         'sortino', 'beta', 'alpha', 'monte carlo', 'cvar'],
+        'esg':          ['esg', 'environmental', 'social', 'governance',
+                         'carbon', 'sustainability', 'green', 'emissions'],
+        'portfolio':    ['holdings', 'allocation', 'weight', 'position',
+                         'portfolio', 'aum', 'diversif', 'concentration'],
+    }
+
+    def _detect_categories(self, query: str) -> list:
+        q = query.lower()
+        matched = [cat for cat, kws in self.CATEGORY_KEYWORDS.items()
+                   if any(kw in q for kw in kws)]
+        return matched if matched else list(self.CATEGORY_KEYWORDS.keys())
+
     def retrieve_knowledge(self, query: str, top_k: int = 3) -> list:
         """
-        Retrieve relevant knowledge from Pinecone
-        This is the RAG part!
+        Retrieve from Pinecone with metadata category filter + cosine post-filter.
+        Only searches within relevant categories — improves context precision.
         """
-        
-        # Embed the query
-        query_embedding = self.embedder.encode(query).tolist()
-        
-        # Search Pinecone
+        query_embedding = self.embedder.encode(query)
+        categories      = self._detect_categories(query)
+
         results = self.index.query(
-            vector=query_embedding,
+            vector=query_embedding.tolist(),
             top_k=top_k,
-            include_metadata=True
+            include_metadata=True,
+            filter={"category": {"$in": categories}}
         )
-        
-        # Extract relevant documents
+
         docs = []
         for match in results['matches']:
-            docs.append({
-                'text': match['metadata']['text'],
-                'category': match['metadata']['category'],
-                'score': match['score']
-            })
-        
+            doc_text = match['metadata']['text']
+            doc_emb = self.embedder.encode(doc_text)
+            # cosine similarity
+            sim = float(np.dot(query_embedding, doc_emb) /
+                        (np.linalg.norm(query_embedding) * np.linalg.norm(doc_emb)))
+            if sim >= self.RETRIEVAL_MIN_SCORE:
+                docs.append({
+                    'text': doc_text,
+                    'category': match['metadata']['category'],
+                    'score': match['score'],
+                    'cosine_sim': round(sim, 3),
+                })
+
         return docs
     
     def query(self, user_question: str) -> dict:
@@ -133,22 +155,18 @@ Risk Metrics (Custom Monte Carlo Calculation):
         # Step 4: Generate response with Gemini
         print("\n3. Generating response with Gemini...")
         
-        prompt = f"""You are an expert financial advisor assistant. Answer the user's question using:
+        prompt = f"""You are a concise financial advisor assistant. Answer in 3-4 sentences maximum.
+Use ONLY the data and knowledge provided below — do not add external information.
 
-1. PORTFOLIO DATA (from custom calculations):
+PORTFOLIO DATA (custom calculations):
 {portfolio_context}
 
-2. FINANCIAL KNOWLEDGE (from knowledge base):
+FINANCIAL KNOWLEDGE (knowledge base):
 {knowledge_context}
 
-USER QUESTION: {user_question}
+QUESTION: {user_question}
 
-Provide a clear, professional answer that:
-- Uses the actual portfolio data when relevant
-- Explains financial concepts from the knowledge base
-- Is concise but informative
-- Mentions that calculations are from custom models, not estimations
-
+Answer directly in 3-4 sentences. Reference specific numbers from the portfolio data when relevant.
 ANSWER:"""
 
         response = self.llm.generate_content(prompt)

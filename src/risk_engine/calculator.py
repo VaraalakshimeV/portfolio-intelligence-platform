@@ -45,13 +45,15 @@ class RiskCalculator:
         """Historical VaR - simplest method"""
         sorted_returns = np.sort(returns)
         index = int((1 - self.confidence_level) * len(returns))
-        
-        var_daily = abs(sorted_returns[index])
+
+        # Loss is positive; if the percentile return is a gain, VaR = 0
+        var_daily = max(0.0, -sorted_returns[index])
         var_monthly = var_daily * np.sqrt(21)  # 21 trading days/month
-        
-        # Conditional VaR (CVaR) - average of losses beyond VaR
-        cvar_daily = abs(np.mean(sorted_returns[:index]))
-        
+
+        # CVaR: expected loss in the tail (clamp to 0 if tail is all gains)
+        tail = sorted_returns[:index]
+        cvar_daily = max(0.0, -np.mean(tail)) if len(tail) > 0 else var_daily
+
         return {
             'var_95_daily': var_daily,
             'var_95_monthly': var_monthly,
@@ -63,16 +65,15 @@ class RiskCalculator:
         """Parametric VaR - assumes normal distribution"""
         mean = np.mean(returns)
         std = np.std(returns)
-        
-        # Z-score for 95% confidence
+
+        # z_score is negative (e.g. -1.645 at 95%); loss = -(mean + z*std)
         z_score = stats.norm.ppf(1 - self.confidence_level)
-        
-        var_daily = abs(mean + z_score * std)
+        var_daily = max(0.0, -(mean + z_score * std))
         var_monthly = var_daily * np.sqrt(21)
-        
-        # CVaR for normal distribution
-        cvar_daily = abs(mean - std * stats.norm.pdf(z_score) / (1 - self.confidence_level))
-        
+
+        # CVaR for normal distribution; clamp to 0 if distribution implies no loss
+        cvar_daily = max(0.0, -(mean - std * stats.norm.pdf(z_score) / (1 - self.confidence_level)))
+
         return {
             'var_95_daily': var_daily,
             'var_95_monthly': var_monthly,
@@ -182,9 +183,9 @@ class RiskCalculator:
         Beta > 1: More volatile than market
         Beta < 1: Less volatile than market
         """
-        covariance = np.cov(portfolio_returns, market_returns)[0][1]
-        market_variance = np.var(market_returns)
-        
+        covariance = np.cov(portfolio_returns, market_returns)[0][1]  # ddof=1
+        market_variance = np.var(market_returns, ddof=1)              # match ddof
+
         beta = covariance / market_variance
         return beta
     
